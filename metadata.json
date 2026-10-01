@@ -1,0 +1,8 @@
+{
+  "name": "Diseñador de Zapatas Aisladas ACI 318 / E.060 1.0",
+  "description": "Software técnico para el diseño geotécnico y estructural de zapatas aisladas de concreto armado según normas ACI 318 y NTE E.060.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

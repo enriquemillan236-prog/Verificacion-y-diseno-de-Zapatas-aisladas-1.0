@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diseño y Verificación de Zapatas Aisladas - ACI 318 / NTE E.060</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: '#183B2F',
+            forestLight: '#1E4838',
+            mint: '#A3D1B4',
+            mintLight: '#D2E3D8',
+            goldSoft: '#EEDFA8',
+            bgBeige: '#F7F7F2'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Montserrat', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #F7F7F2; }
+    h1, h2, h3, .font-heading { font-family: 'Montserrat', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; }
+    }
+  </style>
+</head>
+<body class="bg-[#F7F7F2] text-slate-800 antialiased min-h-screen">
+
+  <!-- HEADER SUPERIOR -->
+  <header class="bg-[#183B2F] text-white shadow-md border-b border-[#143228] no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-12 h-12 rounded-xl bg-[#D2E3D8] text-[#183B2F] flex items-center justify-center font-bold text-2xl shadow-inner shrink-0">
+          <i class="fa-solid fa-cubes-stacked"></i>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight font-heading">
+            DISEÑADOR Y VERIFICADOR DE ZAPATAS AISLADAS
+          </h1>
+          <p class="text-xs sm:text-sm text-[#D2E3D8]/80">
+            Cálculo y comprobación geotécnica y estructural según norma ACI 318 / NTE E.060
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openModal()" class="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+          <i class="fa-solid fa-file-lines"></i>
+          <span>Memoria de Cálculo (PDF)</span>
+        </button>
+        <button onclick="exportCsv()" class="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-[#1E4838] text-white border border-[#2e624e] hover:bg-[#255845] transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+          <i class="fa-solid fa-file-csv"></i>
+          <span>CSV</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
+
+    <!-- CARD 1: GESTIÓN DE ZAPATA POR PROYECTO -->
+    <div class="bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-gray-100 gap-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-[#D2E3D8] text-[#183B2F] flex items-center justify-center font-bold">
+            <i class="fa-solid fa-building"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-base font-bold text-[#183B2F] font-heading">GESTIÓN DE ZAPATA POR PROYECTO</h2>
+              <span class="px-2 py-0.5 text-xs font-semibold rounded bg-[#D2E3D8] text-[#183B2F] border border-[#A3D1B4]">AIST-318</span>
+            </div>
+            <p class="text-xs text-gray-500">Parámetros de control técnico y estado de verificación</p>
+          </div>
+        </div>
+
+        <div id="statusBadge" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D2E3D8] text-[#183B2F] border border-[#A3D1B4] font-bold text-xs sm:text-sm">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="statusBadgeText">CONFORME / OK</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre del Proyecto</label>
+          <input type="text" id="inpProject" value="Edificio Residencial Las Palmeras" class="w-full text-sm px-3 py-2 bg-[#F7F7F2] border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Código de Zapata</label>
+          <input type="text" id="inpCode" value="Z-01" class="w-full text-sm font-bold text-[#183B2F] px-3 py-2 bg-[#F7F7F2] border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Especialista / Proyectista</label>
+          <input type="text" id="inpEngineer" value="Ing. Estructural" class="w-full text-sm px-3 py-2 bg-[#F7F7F2] border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Normativa</label>
+          <select id="inpNormative" onchange="recalculate(true)" class="w-full text-sm px-3 py-2 bg-[#F7F7F2] border border-gray-300 rounded-lg font-medium text-[#183B2F]">
+            <option value="ACI 318-19">ACI 318-19 (1.2D + 1.6L)</option>
+            <option value="NTE E.060" selected>NTE E.060 (1.4D + 1.7L)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMAGEN DE PORTADA LIMPIA (SIN BOTONES) -->
+    <div class="relative w-full rounded-2xl overflow-hidden shadow-sm border border-[#E5E7EB] bg-slate-900">
+      <div class="relative h-48 sm:h-64 md:h-72 w-full overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#183B2F] to-[#2E6350] flex items-center justify-between p-8 text-white">
+          <div class="max-w-2xl">
+            <span class="inline-block px-3 py-1 rounded-full bg-[#EEDFA8] text-[#183B2F] text-xs font-bold mb-2">
+              <i class="fa-solid fa-helmet-safety mr-1"></i> CIMENTACIÓN DE CONCRETO ARMADO
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold font-heading">Zapata Aislada Centrada</h2>
+            <p className="text-xs sm:text-sm text-[#D2E3D8] mt-1 font-medium">
+              Transmisión segura de cargas axiales y momentos flectores de columnas al estrato portante del terreno.
+            </p>
+          </div>
+          <div class="hidden md:block opacity-20 text-8xl">
+            <i class="fa-solid fa-cubes-stacked"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2: PARÁMETROS DE ENTRADA EN TODO EL ANCHO -->
+    <div class="bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-gray-100 gap-2">
+        <div>
+          <h2 class="text-base font-bold text-[#183B2F] font-heading flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i>
+            <span>PARÁMETROS DE DISEÑO Y ENTRADA DE DATOS</span>
+          </h2>
+          <span class="text-xs text-gray-500">Cálculo dinámico y verificación normativa</span>
+        </div>
+
+        <!-- Selector de Modo de Dimensionamiento -->
+        <div class="flex items-center bg-[#F7F7F2] p-1 rounded-lg border border-gray-200 text-xs">
+          <button id="btnModeAuto" type="button" onclick="setDimensionMode('auto')" class="px-3 py-1.5 rounded-md font-bold bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all">
+            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Automático
+          </button>
+          <button id="btnModeManual" type="button" onclick="setDimensionMode('manual')" class="px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all">
+            <i class="fa-solid fa-ruler-combined mr-1"></i> Modo Manual
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+        <!-- a) Materiales -->
+        <div class="p-3.5 rounded-xl bg-[#F7F7F2] border border-gray-200">
+          <h3 class="text-xs font-bold text-[#183B2F] mb-2 flex items-center gap-1.5 pb-1 border-b border-gray-200">
+            <i class="fa-solid fa-cube"></i> a) Propiedades de Materiales
+          </h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Concreto f'c (kg/cm²)</label>
+              <input type="number" id="inpFc" value="210" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Fluencia Fy (kg/cm²)</label>
+              <input type="number" id="inpFy" value="4200" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Recubrimiento libre r (cm)</label>
+              <input type="number" step="0.5" id="inpRec" value="7.5" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg text-[#183B2F]">
+              <div class="flex items-center justify-between text-[10px] text-gray-500 mt-1">
+                <span>Norma: 7.5 cm</span>
+                <span id="badgeDynD" class="font-bold text-[#183B2F] bg-[#D2E3D8]/80 px-1.5 py-0.5 rounded border border-[#A3D1B4]">d = 45.6 cm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- b) Suelo y Desplante -->
+        <div class="p-3.5 rounded-xl bg-[#F7F7F2] border border-gray-200">
+          <h3 class="text-xs font-bold text-[#183B2F] mb-2 flex items-center gap-1.5 pb-1 border-b border-gray-200">
+            <i class="fa-solid fa-mountain"></i> b) Mecánica de Suelos
+          </h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Capacidad qa (kg/cm²)</label>
+              <input type="number" step="0.1" id="inpQa" value="1.5" oninput="recalculate(false)" class="w-full text-xs font-bold text-[#183B2F] p-2 bg-white border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Desplante Df (m)</label>
+              <input type="number" step="0.1" id="inpDf" value="1.0" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Sobrecarga s/c (Tn/m²)</label>
+              <input type="number" step="0.1" id="inpSc" value="0.2" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <!-- c) Cargas de Columna -->
+        <div class="p-3.5 rounded-xl bg-[#F7F7F2] border border-gray-200">
+          <h3 class="text-xs font-bold text-[#183B2F] mb-2 flex items-center justify-between pb-1 border-b border-gray-200">
+            <span><i class="fa-solid fa-weight-hanging"></i> c) Cargas de Servicio</span>
+            <span id="loadSummary" class="text-[10px] text-gray-500 font-bold bg-white px-2 py-0.5 rounded border border-gray-200">Ps = 49.54 Tn</span>
+          </h3>
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Pcm (Muerta) Tn</label>
+                <input type="number" step="0.5" id="inpPcm" value="34.99" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Pcv (Viva) Tn</label>
+                <input type="number" step="0.5" id="inpPcv" value="14.55" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Mcm (Tn·m)</label>
+                <input type="number" step="0.1" id="inpMcm" value="0.0" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Mcv (Tn·m)</label>
+                <input type="number" step="0.1" id="inpMcv" value="0.0" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- d) Columna y Refuerzo -->
+        <div class="p-3.5 rounded-xl bg-[#F7F7F2] border border-gray-200">
+          <h3 class="text-xs font-bold text-[#183B2F] mb-2 flex items-center gap-1.5 pb-1 border-b border-gray-200">
+            <i class="fa-solid fa-shapes"></i> d) Geometría de Columna
+          </h3>
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Lado b (cm)</label>
+                <input type="number" id="inpBcol" value="20" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+              <div>
+                <label class="text-[11px] font-medium text-gray-600 block">Lado t (cm)</label>
+                <input type="number" id="inpTcol" value="20" oninput="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg">
+              </div>
+            </div>
+            <div>
+              <label class="text-[11px] font-medium text-gray-600 block">Varilla Malla (Métrico)</label>
+              <select id="inpBar" onchange="recalculate(false)" class="w-full text-xs font-bold p-2 bg-white border border-gray-300 rounded-lg text-[#183B2F]">
+                <option value="10mm">Ø 10 mm (db = 1.0 cm, As = 0.79 cm²)</option>
+                <option value="12mm">Ø 12 mm (db = 1.2 cm, As = 1.13 cm²)</option>
+                <option value="16mm" selected>Ø 16 mm (db = 1.6 cm, As = 2.01 cm²)</option>
+                <option value="20mm">Ø 20 mm (db = 2.0 cm, As = 3.14 cm²)</option>
+                <option value="25mm">Ø 25 mm (db = 2.5 cm, As = 4.91 cm²)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DE CONTROL PARA MODO MANUAL (B x L x h Y ARMADO INDEPENDIENTE EN L Y B) -->
+      <div id="panelManualControls" style="display: none;" class="mt-4 p-4 bg-[#D2E3D8]/30 rounded-xl border border-[#A3D1B4] space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-2 border-b border-[#A3D1B4]/50">
+          <div class="flex items-center space-x-2 text-xs text-[#183B2F]">
+            <i class="fa-solid fa-circle-info text-[#1E4838]"></i>
+            <div>
+              <span class="font-bold">Modo Manual Activado:</span> Ingrese dimensiones geométricas y configure independientemente la armadura en Dirección L y B.
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-gray-700">B:</span>
+              <input type="number" step="0.05" min="0.5" id="inpManualB" value="2.00" oninput="recalculate(false)" class="w-20 text-xs font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-2xs">
+              <span class="text-xs text-gray-500">m</span>
+            </div>
+
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-gray-700">L:</span>
+              <input type="number" step="0.05" min="0.5" id="inpManualL" value="2.00" oninput="recalculate(false)" class="w-20 text-xs font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-2xs">
+              <span class="text-xs text-gray-500">m</span>
+            </div>
+
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-gray-700">h:</span>
+              <input type="number" step="5" min="25" id="inpManualH" value="55" oninput="recalculate(false)" class="w-20 text-xs font-bold px-2 py-1 bg-white border border-gray-300 rounded shadow-2xs">
+              <span class="text-xs text-gray-500">cm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicador de Área en Panel Manual -->
+        <div id="manualAreaBanner" class="p-2.5 rounded-lg text-xs flex items-center justify-between"></div>
+
+        <!-- Armado Independiente por Dirección -->
+        <div class="pt-1">
+          <div class="text-xs font-bold text-[#183B2F] mb-2 flex items-center justify-between">
+            <span>Configuración Independiente de Armadura:</span>
+            <span class="text-[11px] text-gray-500 font-normal">Pulse "CALCULAR Y VERIFICAR ZAPATA" para la revisión estructural final</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Dirección L -->
+            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+              <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-gray-100">
+                <span class="text-xs font-bold text-gray-800">Dirección L (Largo)</span>
+                <div class="flex items-center gap-1 bg-[#F7F7F2] p-0.5 rounded border border-gray-200 text-[10px]">
+                  <button type="button" id="btnDefLCount" onclick="setManualDefMode('L', 'count')" class="px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white">N° Varillas</button>
+                  <button type="button" id="btnDefLSpacing" onclick="setManualDefMode('L', 'spacing')" class="px-1.5 py-0.5 rounded font-semibold text-gray-600">Espaciamiento</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Diámetro</label>
+                  <select id="inpManualBarL" onchange="recalculate(false)" class="w-full text-xs font-bold text-[#183B2F] p-1.5 bg-white border border-gray-300 rounded-md">
+                    <option value="10mm">Ø 10 mm (0.79 cm²)</option>
+                    <option value="12mm">Ø 12 mm (1.13 cm²)</option>
+                    <option value="16mm" selected>Ø 16 mm (2.01 cm²)</option>
+                    <option value="20mm">Ø 20 mm (3.14 cm²)</option>
+                    <option value="25mm">Ø 25 mm (4.91 cm²)</option>
+                  </select>
+                </div>
+                <div id="boxManualLCount">
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Cantidad</label>
+                  <input type="number" id="inpManualNBarsL" value="9" min="2" max="60" oninput="recalculate(false)" class="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center">
+                </div>
+                <div id="boxManualLSpacing" style="display: none;">
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Espaciamiento (cm)</label>
+                  <input type="number" id="inpManualSpacingL" value="21.6" min="7" max="40" step="0.5" oninput="onManualSpacingChange('L')" class="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center">
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] text-gray-500 bg-[#F7F7F2] p-1.5 rounded">
+                <span id="previewSpacingL">Espaciamiento: <strong>@ 21.6 cm</strong> (9 varillas)</span>
+                <span id="previewAsL">As colocado: <strong>18.09 cm²</strong></span>
+              </div>
+            </div>
+
+            <!-- Dirección B -->
+            <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+              <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-gray-100">
+                <span class="text-xs font-bold text-gray-800">Dirección B (Ancho)</span>
+                <div class="flex items-center gap-1 bg-[#F7F7F2] p-0.5 rounded border border-gray-200 text-[10px]">
+                  <button type="button" id="btnDefBCount" onclick="setManualDefMode('B', 'count')" class="px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white">N° Varillas</button>
+                  <button type="button" id="btnDefBSpacing" onclick="setManualDefMode('B', 'spacing')" class="px-1.5 py-0.5 rounded font-semibold text-gray-600">Espaciamiento</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Diámetro</label>
+                  <select id="inpManualBarB" onchange="recalculate(false)" class="w-full text-xs font-bold text-[#183B2F] p-1.5 bg-white border border-gray-300 rounded-md">
+                    <option value="10mm">Ø 10 mm (0.79 cm²)</option>
+                    <option value="12mm">Ø 12 mm (1.13 cm²)</option>
+                    <option value="16mm" selected>Ø 16 mm (2.01 cm²)</option>
+                    <option value="20mm">Ø 20 mm (3.14 cm²)</option>
+                    <option value="25mm">Ø 25 mm (4.91 cm²)</option>
+                  </select>
+                </div>
+                <div id="boxManualBCount">
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Cantidad</label>
+                  <input type="number" id="inpManualNBarsB" value="9" min="2" max="60" oninput="recalculate(false)" class="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center">
+                </div>
+                <div id="boxManualBSpacing" style="display: none;">
+                  <label class="block text-[11px] font-medium text-gray-600 mb-1">Espaciamiento (cm)</label>
+                  <input type="number" id="inpManualSpacingB" value="21.6" min="7" max="40" step="0.5" oninput="onManualSpacingChange('B')" class="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center">
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] text-gray-500 bg-[#F7F7F2] p-1.5 rounded">
+                <span id="previewSpacingB">Espaciamiento: <strong>@ 21.6 cm</strong> (9 varillas)</span>
+                <span id="previewAsB">As colocado: <strong>18.09 cm²</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3: ESQUEMA TÉCNICO EN PLANTA Y CORTE ELEVACIÓN (SIN 3D, CON LEYENDA LATERAL Y ENCUADRE DESPLAZADO) -->
+    <div class="bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-gray-100 gap-3">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-base sm:text-lg font-bold text-[#183B2F] font-heading">
+              ESQUEMA TÉCNICO: PLANTA Y CORTE ELEVACIÓN
+            </h2>
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-[#D2E3D8] text-[#183B2F]">Planos de Detalle</span>
+          </div>
+          <p class="text-xs text-gray-500">Visualización interactiva a escala con cotas, cargas completas Pu/Ps y armadura ortogonal</p>
+        </div>
+
+        <!-- Controles de pestaña: Planta (X-Y) y Corte Elevación -->
+        <div class="flex items-center bg-[#F7F7F2] p-1 rounded-lg border border-gray-200">
+          <button id="btnTabPlan" onclick="switchView('plan')" class="px-3 py-1.5 text-xs font-bold rounded bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all">
+            Planta (X-Y)
+          </button>
+          <button id="btnTabElev" onclick="switchView('elevation')" class="px-3 py-1.5 text-xs font-bold rounded text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all">
+            Corte Elevación
+          </button>
+        </div>
+      </div>
+
+      <!-- Lienzo SVG y Panel Lateral Independiente para Leyenda Técnica -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
+        {/* Lienzo SVG Principal (3 columnas en desktop) */}
+        <div class="lg:col-span-3 w-full bg-[#FAFAF8] rounded-xl border border-gray-200 flex items-center justify-center p-2 relative overflow-hidden min-h-[460px]">
+          <svg id="mainTechSvg" viewBox="0 0 760 490" class="w-full h-auto max-h-[500px] select-none">
+            <defs>
+              <marker id="svArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#183B2F" />
+              </marker>
+              <marker id="svArrowMuted" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748B" />
+              </marker>
+              <marker id="svArrowPu" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#B45309" />
+              </marker>
+              <pattern id="svHatch" width="16" height="16" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="0.75" fill="#183B2F" opacity="0.25" />
+                <circle cx="10" cy="8" r="1" fill="#183B2F" opacity="0.3" />
+                <path d="M12,2 L14,4 M3,11 L5,13" stroke="#183B2F" stroke-width="0.5" opacity="0.2" />
+              </pattern>
+              <pattern id="svSoil" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M0,10 L5,10 M10,10 L15,10 M2,15 L7,15 M12,15 L17,15" stroke="#9CA3AF" stroke-width="0.8" />
+              </pattern>
+            </defs>
+
+            <!-- 1. VISTA EN PLANTA (X-Y) -->
+            <g id="svgViewPlan" transform="translate(380, 240)">
+              <!-- Ejes estructurales -->
+              <g stroke="#94A3B8" stroke-width="1" stroke-dasharray="6,4">
+                <line x1="-220" y1="0" x2="220" y2="0" />
+                <line x1="0" y1="-210" x2="0" y2="210" />
+              </g>
+              <circle cx="-235" cy="0" r="12" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.5" />
+              <text x="-235" y="4" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">A</text>
+              <circle cx="235" cy="0" r="12" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.5" />
+              <text x="235" y="4" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">A'</text>
+
+              <circle cx="0" cy="-225" r="12" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.5" />
+              <text x="0" y="-221" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+              <circle cx="0" cy="225" r="12" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.5" />
+              <text x="0" y="229" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">1'</text>
+
+              <rect id="svgPlanBox" x="-160" y="-160" width="320" height="320" fill="#FFFFFF" stroke="#183B2F" stroke-width="2.5" rx="2" />
+              <rect x="-160" y="-160" width="320" height="320" fill="url(#svHatch)" opacity="0.18" />
+              
+              <!-- Zona crítica punzonamiento -->
+              <rect id="svgPlanCrit" x="-75" y="-75" width="150" height="150" fill="#A3D1B4" fill-opacity="0.25" stroke="#183B2F" stroke-width="1.8" stroke-dasharray="6,4" rx="4" />
+              <text id="svgPlanCritText" x="0" y="-82" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">Zona crítica bo (a d/2)</text>
+
+              <!-- Parrilla en Planta -->
+              <g id="svgPlanRebar"></g>
+
+              <!-- Columna centrada -->
+              <rect id="svgPlanCol" x="-30" y="-30" width="60" height="60" fill="#183B2F" stroke="#0F241D" stroke-width="1.8" />
+              <line x1="-30" y1="-30" x2="30" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+              <line x1="30" y1="-30" x2="-30" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.6" />
+              <text id="svgPlanColText" x="0" y="-38" fill="#183B2F" font-size="12" font-weight="bold" text-anchor="middle">20 x 20</text>
+
+              <!-- Cotas en Planta -->
+              <line x1="-160" y1="175" x2="160" y2="175" stroke="#183B2F" stroke-width="1.5" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+              <rect x="-65" y="162" width="130" height="26" rx="5" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+              <text id="svgPlanDimB" x="0" y="180" fill="#183B2F" font-size="13" font-weight="bold" text-anchor="middle">B = 2.00 m</text>
+
+              <line x1="175" y1="-160" x2="175" y2="160" stroke="#183B2F" stroke-width="1.5" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+              <rect x="185" y="-13" width="120" height="26" rx="5" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+              <text id="svgPlanDimL" x="245" y="5" fill="#183B2F" font-size="13" font-weight="bold" text-anchor="middle">L = 2.00 m</text>
+            </g>
+
+            <!-- 2. CORTE ELEVACIÓN (DESPLAZADO HACIA ABAJO PARA CARGAS Pu Y Ps COMPLETAS CON MARGEN SUPERIOR DESPEJADO) -->
+            <g id="svgViewElev" style="display: none;">
+              <!-- Cargas Axiales Pu y Ps en la parte superior despejada (Y=35 a 88) -->
+              <g id="svgElevLoads" transform="translate(380, 35)">
+                <rect x="-120" y="0" width="240" height="54" rx="8" fill="#FFFFFF" stroke="#B45309" stroke-width="2" filter="drop-shadow(0 3px 6px rgba(0,0,0,0.08))" />
+                <text id="svgElevPu" x="0" y="22" fill="#B45309" font-size="13" font-weight="extrabold" text-anchor="middle">Pu = 73.72 Tn (Diseño)</text>
+                <text id="svgElevPs" x="0" y="42" fill="#183B2F" font-size="12" font-weight="bold" text-anchor="middle">Ps = 49.54 Tn (Servicio)</text>
+                {/* Flecha vector descendente */}
+                <line x1="0" y1="56" x2="0" y2="100" stroke="#B45309" stroke-width="3.8" marker-end="url(#svArrowPu)" />
+              </g>
+
+              {/* Elevación con centro en X=380 */}
+              <g transform="translate(380, 0)">
+                <!-- NTN ±0.00 m en Y=180 -->
+                <line x1="-310" y1="180" x2="310" y2="180" stroke="#64748B" stroke-width="1.5" stroke-dasharray="5,4" />
+                <text x="-300" y="172" fill="#475569" font-size="12" font-weight="bold">N.T.N. ±0.00 m</text>
+
+                <!-- Suelo lateral -->
+                <rect x="-290" y="180" width="90" height="90" fill="url(#svSoil)" opacity="0.45" />
+                <rect x="200" y="180" width="90" height="90" fill="url(#svSoil)" opacity="0.45" />
+
+                <!-- Solado pobre e=10cm debajo de zapata -->
+                <rect x="-200" y="350" width="400" height="15" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1" />
+                <text x="0" y="361" fill="#64748B" font-size="9.5" font-weight="bold" text-anchor="middle">Solado e=10cm (f'c = 100 kg/cm²)</text>
+
+                <!-- Zapata de concreto (Y=270 a Y=350, h=80px) -->
+                <rect x="-200" y="270" width="400" height="80" fill="#1E4838" stroke="#183B2F" stroke-width="2.5" />
+                <rect x="-200" y="270" width="400" height="80" fill="url(#svHatch)" opacity="0.3" />
+
+                <!-- Columna en elevación (Y=145 a Y=270) -->
+                <rect x="-35" y="145" width="70" height="125" fill="#183B2F" stroke="#0F241D" stroke-width="1.8" />
+                <text x="0" y="210" fill="#FFFFFF" font-size="13" font-weight="bold" text-anchor="middle">Columna</text>
+
+                <!-- Arranques de Columna con ganchos a 90° -->
+                <path id="svgElevDowelL" d="M-24,150 L-24,320 L-75,320" fill="none" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" />
+                <path id="svgElevDowelR" d="M24,150 L24,320 L75,320" fill="none" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" />
+
+                <!-- Parrilla inferior dinámica con recubrimiento r -->
+                <g id="svgElevRebarGroup"></g>
+
+                <!-- Presión suelo trapecio -->
+                <polygon points="-200,366 200,366 200,406 -200,406" fill="#D2E3D8" fill-opacity="0.5" stroke="#A3D1B4" stroke-width="1.2" />
+                <!-- Flechas de reacción de suelo -->
+                <g stroke="#183B2F" stroke-width="1.3">
+                  <line x1="-160" y1="402" x2="-160" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="-110" y1="402" x2="-110" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="-60" y1="402" x2="-60" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="0" y1="402" x2="0" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="60" y1="402" x2="60" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="110" y1="402" x2="110" y2="370" marker-end="url(#svArrow)" />
+                  <line x1="160" y1="402" x2="160" y2="370" marker-end="url(#svArrow)" />
+                </g>
+                <text id="svgElevQmax" x="-180" y="420" fill="#183B2F" font-size="12" font-weight="bold">q_max = 1.24 kg/cm²</text>
+                <text id="svgElevQa" x="80" y="420" fill="#183B2F" font-size="12" font-weight="bold">qa = 1.50 kg/cm²</text>
+
+                <!-- Cotas de Altura h, Peralte d y Recubrimiento r -->
+                <line x1="220" y1="270" x2="220" y2="350" stroke="#183B2F" stroke-width="1.5" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <rect x="230" y="298" width="95" height="24" rx="5" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text id="svgElevDimH" x="277" y="314" fill="#183B2F" font-size="12" font-weight="bold" text-anchor="middle">h = 55 cm</text>
+
+                <line id="svgElevDimDLine" x1="-225" y1="270" x2="-225" y2="325" stroke="#183B2F" stroke-width="1.5" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <rect id="svgElevDimDBox" x="-330" y="285" width="98" height="24" rx="5" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text id="svgElevDimDText" x="-281" y="301" fill="#183B2F" font-size="12" font-weight="bold" text-anchor="middle">d = 45.6 cm</text>
+
+                <line id="svgElevDimRLine" x1="-225" y1="325" x2="-225" y2="350" stroke="#64748B" stroke-width="1.5" marker-start="url(#svArrowMuted)" marker-end="url(#svArrowMuted)" />
+                <rect id="svgElevDimRBox" x="-330" y="330" width="98" height="20" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1" />
+                <text id="svgElevDimRText" x="-281" y="344" fill="#475569" font-size="11" font-weight="bold" text-anchor="middle">r = 7.5 cm</text>
+
+                <line x1="-285" y1="180" x2="-285" y2="350" stroke="#183B2F" stroke-width="1.5" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <rect x="-375" y="245" width="85" height="24" rx="5" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text id="svgElevDimDf" x="-332" y="261" fill="#183B2F" font-size="12" font-weight="bold" text-anchor="middle">Df = 1.00 m</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <!-- PANEL LATERAL DERECHO INDEPENDIENTE: LEYENDA TÉCNICA COMPLETA -->
+        <div class="lg:col-span-1 bg-[#F7F7F2] rounded-xl border border-gray-200 p-4 flex flex-col justify-between space-y-3.5">
+          <div>
+            <div class="flex items-center justify-between pb-2.5 border-b border-gray-200">
+              <h3 class="text-xs font-bold text-[#183B2F] uppercase tracking-wider font-heading flex items-center gap-1.5">
+                <i class="fa-solid fa-list-check text-[#1E4838]"></i>
+                <span>Leyenda Técnica</span>
+              </h3>
+              <span class="text-[10px] font-semibold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">Normativa</span>
+            </div>
+
+            <div class="space-y-2.5 mt-3 text-xs">
+              <!-- 1. Concreto -->
+              <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3.5 h-3.5 rounded-full bg-[#183B2F] shrink-0"></span>
+                  <span class="font-bold text-gray-800">Concreto Estructural</span>
+                </div>
+                <p id="legFc" class="text-[11px] text-gray-600 mt-1 pl-5">f'c = 210 kg/cm²</p>
+              </div>
+
+              <!-- 2. Acero -->
+              <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3.5 h-3.5 rounded-full bg-[#C97A3E] shrink-0"></span>
+                  <span class="font-bold text-gray-800">Acero de Refuerzo</span>
+                </div>
+                <p id="legFy" class="text-[11px] text-gray-600 mt-1 pl-5">Fy 4200 (3/4")</p>
+              </div>
+
+              <!-- 3. Recubrimiento & Peralte -->
+              <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3.5 h-3.5 rounded bg-slate-600 shrink-0"></span>
+                  <span class="font-bold text-gray-800">Recubrimiento & Peralte</span>
+                </div>
+                <p id="legRec" class="text-[11px] text-gray-600 mt-1 pl-5">r = 7.5 cm | d = 45.6 cm</p>
+                <p class="text-[10px] text-gray-400 mt-0.5 pl-5">d = h - r - db (dinámico)</p>
+              </div>
+
+              <!-- 4. Zona Crítica -->
+              <div class="p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3.5 h-3.5 rounded bg-[#A3D1B4] border border-[#183B2F] shrink-0"></span>
+                  <span class="font-bold text-gray-800">Zona Crítica Punz.</span>
+                </div>
+                <p id="legBo" class="text-[11px] text-gray-600 mt-1 pl-5">Perímetro bo (a d/2)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de Cargas en leyenda -->
+          <div class="pt-2 border-t border-gray-200 text-[11px] text-gray-600 bg-white/70 p-2.5 rounded-lg border border-gray-200/80">
+            <div class="flex justify-between items-center">
+              <span>Carga Diseño (Pu):</span>
+              <strong id="legPuText" class="text-[#B45309] font-mono">73.72 Tn</strong>
+            </div>
+            <div class="flex justify-between items-center mt-1">
+              <span>Carga Servicio (Ps):</span>
+              <strong id="legPsText" class="text-[#183B2F] font-mono">49.54 Tn</strong>
+            </div>
+            <div class="flex justify-between items-center mt-1 pt-1 border-t border-gray-100">
+              <span>Presión Máx. (q_max):</span>
+              <strong id="legQmaxText" class="text-emerald-700">1.24 kg/cm²</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: PANEL DE RESULTADOS Y MEMORIA DE CÁLCULO -->
+    <div class="bg-white rounded-xl shadow-sm border border-[#E5E7EB] p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row justify-between items-center pb-4 border-b border-gray-100 gap-3">
+        <div>
+          <h2 class="text-base font-bold text-[#183B2F] font-heading flex items-center gap-2">
+            <i class="fa-solid fa-square-poll-vertical"></i>
+            <span>RESULTADOS DE CÁLCULO Y VERIFICACIÓN ESTRUCTURAL</span>
+          </h2>
+          <p class="text-xs text-gray-500">Comprobación geotécnica y estructural según especificaciones ACI 318 / NTE E.060</p>
+        </div>
+
+        <!-- Botón de Acción Principal -->
+        <button onclick="recalculate(true)" class="px-6 py-3 rounded-xl font-bold text-sm text-[#3D3008] bg-[#EEDFA8] hover:bg-[#e4d393] border border-[#dfce88] shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-95">
+          <i class="fa-solid fa-calculator"></i>
+          <span>CALCULAR Y VERIFICAR ZAPATA</span>
+        </button>
+      </div>
+
+      <!-- ESTADO PREVIO / AVISO CONDICIONAL -->
+      <div id="resultsPendingBox" class="my-6 p-8 rounded-xl bg-[#F7F7F2] border border-dashed border-gray-300 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-[#EEDFA8] text-[#3D3008] flex items-center justify-center mb-3 shadow-xs">
+          <i class="fa-solid fa-calculator text-lg"></i>
+        </div>
+        <h3 class="text-base font-bold text-[#183B2F] font-heading mb-1">Resultados pendientes de cálculo</h3>
+        <p class="text-xs sm:text-sm text-gray-600 max-w-lg mx-auto mb-4">
+          Presione el botón <strong class="text-[#183B2F]">"CALCULAR Y VERIFICAR ZAPATA"</strong> para obtener las dimensiones, espesor y peralte, armadura en L y armadura en B, además de todas las comprobaciones geotécnicas y estructurales.
+        </p>
+        <button onclick="recalculate(true)" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-[#3D3008] bg-[#EEDFA8] hover:bg-[#e4d393] border border-[#dfce88] shadow-sm transition-all active:scale-95 cursor-pointer">
+          <i class="fa-solid fa-calculator"></i>
+          <span>CALCULAR Y VERIFICAR ZAPATA</span>
+        </button>
+      </div>
+
+      <!-- CONTENEDOR DE RESULTADOS (MOSTRADOS ÚNICAMENTE AL PRESIONAR EL BOTÓN) -->
+      <div id="resultsContent" style="display: none;">
+        <!-- 4 TARJETAS KPI PRINCIPALES DIRECTAMENTE DEBAJO DEL BOTÓN -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <!-- 1. Dimensiones Planta -->
+          <div id="kpiCardDim" class="bg-[#F7F7F2] border border-gray-200 p-3.5 rounded-xl text-center shadow-xs transition-all">
+            <span class="text-gray-500 block text-xs font-semibold">Dimensiones Planta</span>
+            <span id="kpiDimPlanta" class="font-extrabold text-[#183B2F] text-base sm:text-lg block mt-1">2.00 x 2.00 m</span>
+            <span id="kpiAreaPlanta" class="text-[11px] text-gray-500 block mt-0.5 font-medium">Área Az = 4.00 m²</span>
+            <span id="kpiAreaBadge" class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">OK (Az ≥ Areq)</span>
+          </div>
+
+          <!-- 2. Espesor y Peralte -->
+          <div class="bg-[#F7F7F2] border border-gray-200 p-3.5 rounded-xl text-center shadow-xs">
+            <span class="text-gray-500 block text-xs font-semibold">Espesor y Peralte</span>
+            <span id="kpiEspesorPeralte" class="font-extrabold text-[#183B2F] text-base sm:text-lg block mt-1">h = 55 cm | d = 45.6 cm</span>
+            <span id="kpiRecubrimiento" class="text-[11px] text-gray-500 block mt-0.5 font-medium">Recubrimiento r = 7.5 cm</span>
+            <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">d = h - r - db</span>
+          </div>
+
+          <!-- 3. Armadura en L -->
+          <div id="kpiCardSteelL" class="bg-[#F7F7F2] border border-gray-200 p-3.5 rounded-xl text-center shadow-xs transition-all">
+            <span class="text-gray-500 block text-xs font-semibold">Armadura en L</span>
+            <span id="kpiArmaduraL" class="font-extrabold text-[#183B2F] text-base sm:text-lg block mt-1">9 Ø 16 mm @ 21.6 cm</span>
+            <span id="kpiAsReqL" class="text-[11px] text-gray-500 block mt-0.5 font-medium">As req = 25.56 cm²</span>
+            <span id="kpiSteelBadgeL" class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">As CONFORME</span>
+          </div>
+
+          <!-- 4. Armadura en B -->
+          <div id="kpiCardSteelB" class="bg-[#F7F7F2] border border-gray-200 p-3.5 rounded-xl text-center shadow-xs transition-all">
+            <span class="text-gray-500 block text-xs font-semibold">Armadura en B</span>
+            <span id="kpiArmaduraB" class="font-extrabold text-[#183B2F] text-base sm:text-lg block mt-1">9 Ø 16 mm @ 21.6 cm</span>
+            <span id="kpiAsReqB" class="text-[11px] text-gray-500 block mt-0.5 font-medium">As req = 25.56 cm²</span>
+            <span id="kpiSteelBadgeB" class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">As CONFORME</span>
+          </div>
+        </div>
+
+        <!-- 4 Tarjetas de Capacidad y Estado -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 my-4">
+          <div class="p-3.5 rounded-xl border bg-[#F7F7F2] border-gray-200">
+            <span class="text-xs font-semibold text-gray-600 block">Presión sobre Suelo</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="kpiQmax" class="text-xl font-extrabold text-[#183B2F]">1.24</span>
+              <span id="kpiQaSub" class="text-xs text-gray-500">/ 1.50 kg/cm²</span>
+            </div>
+            <span id="kpiSoilBadge" class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">OK (q_max ≤ qa)</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl border bg-[#F7F7F2] border-gray-200">
+            <span class="text-xs font-semibold text-gray-600 block">Cortante a dist. d</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="kpiVuFlex" class="text-xl font-extrabold text-[#183B2F]">19.8</span>
+              <span id="kpiPhiVcFlex" class="text-xs text-gray-500">/ ØVc 28.5 Tn</span>
+            </div>
+            <span id="kpiFlexBadge" class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">CONFORME (1 Vía)</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl border bg-[#F7F7F2] border-gray-200">
+            <span class="text-xs font-semibold text-gray-600 block">Punzonamiento</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="kpiVuPunz" class="text-xl font-extrabold text-[#183B2F]">65.2</span>
+              <span id="kpiPhiVcPunz" class="text-xs text-gray-500">/ ØVc 82.1 Tn</span>
+            </div>
+            <span id="kpiPunzBadge" class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">CONFORME (2 Vías)</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl border bg-[#F7F7F2] border-gray-200">
+            <span class="text-xs font-semibold text-gray-600 block">Espaciamiento de Acero</span>
+            <div id="kpiSpacingVal" class="text-sm font-extrabold text-[#183B2F] mt-1">
+              S = 21.6 cm ≤ 30 cm
+            </div>
+            <span id="kpiSpacingBadge" class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]">CONFORME</span>
+          </div>
+        </div>
+
+        <!-- Tablas Detalladas Paso a Paso -->
+        <div class="overflow-x-auto border border-gray-200 rounded-xl mt-4">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+              <tr>
+                <th class="p-3">Comprobación</th>
+                <th class="p-3">Ecuación de Cálculo</th>
+                <th class="p-3">Valor Actuante</th>
+                <th class="p-3">Límite Resistente</th>
+                <th class="p-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-700">
+              <tr>
+                <td class="p-3 font-bold text-[#183B2F]">1. Dimensiones en Planta</td>
+                <td class="p-3 font-mono">B = L = √(Ps / 10*qn)</td>
+                <td id="tdArea" class="p-3 font-bold">2.00 x 2.00 m (Az=4.00 m²)</td>
+                <td id="tdAreq" class="p-3">Req: 3.81 m²</td>
+                <td class="p-3 text-emerald-700 font-bold">CONFORME</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-[#183B2F]">2. Presión sobre el Suelo</td>
+                <td class="p-3 font-mono">q = (Ps/Az) ± (Ms*c/I)</td>
+                <td id="tdQmax" class="p-3 font-bold">1.24 kg/cm²</td>
+                <td id="tdQa" class="p-3">qa = 1.50 kg/cm²</td>
+                <td id="tdSoilStatus" class="p-3 font-bold text-emerald-700">OK</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-[#183B2F]">3. Cortante por Flexión</td>
+                <td class="p-3 font-mono">Vu = qu * (Lv - d) * B</td>
+                <td id="tdVuFlex" class="p-3 font-bold">19.80 Tn</td>
+                <td id="tdPhiVcFlex" class="p-3">ØVc = 28.50 Tn</td>
+                <td id="tdFlexStatus" class="p-3 font-bold text-emerald-700">CONFORME</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-[#183B2F]">4. Punzonamiento (2 Vías)</td>
+                <td class="p-3 font-mono">Vu_p = qu * (Az - Ap)</td>
+                <td id="tdVuPunz" class="p-3 font-bold">65.20 Tn</td>
+                <td id="tdPhiVcPunz" class="p-3">ØVc = 82.10 Tn</td>
+                <td id="tdPunzStatus" class="p-3 font-bold text-emerald-700">CONFORME</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-[#183B2F]">5. Flexión y Acero</td>
+                <td class="p-3 font-mono">As = Mu / (0.9*Fy*(d-a/2))</td>
+                <td id="tdAsReq" class="p-3 font-bold">25.56 cm²</td>
+                <td id="tdAsBar" class="p-3">9 varillas 3/4"</td>
+                <td id="tdSpacing" class="p-3 font-bold text-emerald-700">@ 21.6 cm OK</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL MEMORIA DE CÁLCULO ESTRUCTURAL CON PLANO CONSTRUCTIVO E-01 INTEGRADO -->
+  <div id="reportModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-white print:static" style="display: none;">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-gray-200 overflow-hidden print:max-h-none print:shadow-none print:border-none print:w-full">
+      <!-- Barra superior Modal -->
+      <div class="flex items-center justify-between px-5 py-3.5 bg-[#183B2F] text-white border-b border-[#143228] no-print">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-file-contract text-[#D2E3D8]"></i>
+          <span class="font-bold text-sm sm:text-base">MEMORIA DE CÁLCULO ESTRUCTURAL</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="window.print()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-print"></i>
+            <span>Imprimir / PDF</span>
+          </button>
+          <button onclick="closeModal()" class="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-[#255845] transition-colors cursor-pointer">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido de la Memoria Imprimible -->
+      <div class="p-6 sm:p-8 overflow-y-auto font-sans text-slate-800 space-y-6 print:p-0 print:overflow-visible">
+        <!-- Membrete -->
+        <div class="border-2 border-[#183B2F] rounded-lg p-4 bg-[#F7F7F2]/40">
+          <div class="flex justify-between items-center border-b border-[#183B2F] pb-3 mb-3">
+            <div>
+              <h1 class="text-xl sm:text-2xl font-black text-[#183B2F] tracking-tight">MEMORIA DE CÁLCULO: ZAPATA AISLADA</h1>
+              <p id="repNormText" class="text-xs text-gray-600 font-medium">Cálculo Geotécnico y Estructural según norma NTE E.060 / ACI 318</p>
+            </div>
+            <span id="repCodeBadge" class="px-3 py-1 bg-[#183B2F] text-white font-mono text-sm font-bold rounded">CÓDIGO: Z-01</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div><span class="text-gray-500 block">Proyecto:</span><span id="repProject" class="font-bold text-[#183B2F]">Las Palmeras</span></div>
+            <div><span class="text-gray-500 block">Especialista:</span><span id="repEngineer" class="font-bold text-[#183B2F]">Ing. Estructural</span></div>
+            <div><span class="text-gray-500 block">Estado Global:</span><span class="font-bold text-emerald-700">CONFORME / APROBADO</span></div>
+            <div><span class="text-gray-500 block">Fecha:</span><span id="repDate" class="font-bold text-[#183B2F]">2026-09-30</span></div>
+          </div>
+        </div>
+
+        <!-- 1. Datos de Materiales y Cargas -->
+        <div class="space-y-1.5 text-xs text-gray-700">
+          <h2 class="text-sm font-bold text-[#183B2F] uppercase border-b-2 border-[#D2E3D8] pb-1 mb-2">1. Parámetros de Diseño y Materiales</h2>
+          <p><strong>Concreto f'c:</strong> <span id="repFc">210</span> kg/cm² | <strong>Acero Fy:</strong> <span id="repFy">4200</span> kg/cm² | <strong>Recubrimiento r:</strong> <span id="repRec">7.5</span> cm</p>
+          <p><strong>Capacidad admisible suelo qa:</strong> <span id="repQa">1.50</span> kg/cm² | <strong>Desplante Df:</strong> <span id="repDf">1.00</span> m</p>
+          <p><strong>Cargas de Servicio:</strong> Pcm = <span id="repPcm">34.99</span> Tn, Pcv = <span id="repPcv">14.55</span> Tn → <strong>Ps = <span id="repPs">49.54</span> Tn</strong></p>
+          <p><strong>Cargas Mayoradas de Diseño:</strong> <strong>Pu = <span id="repPu">73.72</span> Tn</strong></p>
+        </div>
+
+        <!-- 2. Dimensionamiento y Peralte Dinámico d = h - r - db -->
+        <div class="space-y-1.5 text-xs text-gray-700">
+          <h2 class="text-sm font-bold text-[#183B2F] uppercase border-b-2 border-[#D2E3D8] pb-1 mb-2">2. Dimensionamiento y Peralte Efectivo</h2>
+          <p><strong>Capacidad Neta (qn):</strong> <span id="repQn">1.28</span> kg/cm² | <strong>Área mínima Az_req:</strong> <span id="repAreq">3.81</span> m²</p>
+          <p><strong>Dimensiones Adoptadas:</strong> B = <span id="repB">2.00</span> m, L = <span id="repL">2.00</span> m → <strong>Área Az = <span id="repAz">4.00</span> m² (CONFORME)</strong></p>
+          <p><strong>Peralte Efectivo Dinámico:</strong> Altura adoptada h = <span id="repH">55</span> cm, recubrimiento r = <span id="repRec2">7.5</span> cm, db = <span id="repDb">1.91</span> cm → <strong>d = h - r - db = <span id="repD">45.6</span> cm</strong></p>
+        </div>
+
+        <!-- 3. Verificación de Presiones y Cortante -->
+        <div class="space-y-1.5 text-xs text-gray-700">
+          <h2 class="text-sm font-bold text-[#183B2F] uppercase border-b-2 border-[#D2E3D8] pb-1 mb-2">3. Comprobaciones Geotécnicas y Estructurales</h2>
+          <p><strong>Presión sobre Suelo:</strong> q_max = <span id="repQmax">1.24</span> kg/cm² ≤ qa (<span id="repQa2">1.50</span> kg/cm²) → <strong class="text-emerald-700">CUMPLE OK</strong></p>
+          <p><strong>Cortante por Flexión (1 vía):</strong> Vu = <span id="repVuFlex">19.8</span> Tn ≤ ØVc (<span id="repPhiVcFlex">28.5</span> Tn) → <strong class="text-emerald-700">CONFORME</strong></p>
+          <p><strong>Punzonamiento (2 vías):</strong> Vu_p = <span id="repVuPunz">65.2</span> Tn ≤ ØVc_p (<span id="repPhiVcPunz">82.1</span> Tn) → <strong class="text-emerald-700">CONFORME</strong></p>
+          <p><strong>Armadura de Acero:</strong> <span id="repRebarFull">9 varillas 3/4" @ 21.6 cm</span> en ambas direcciones (As = <span id="repAsTotal">25.56</span> cm²).</p>
+        </div>
+
+        <!-- 4. PLANO CONSTRUCTIVO DE DETALLE ESTRUCTURAL (PLANO E-01) -->
+        <div class="pt-2 print:break-before-page">
+          <h2 class="text-sm font-bold text-[#183B2F] uppercase border-b-2 border-[#D2E3D8] pb-1 mb-3">
+            7. Plano Constructivo de Detalle Estructural (Plano E-01)
+          </h2>
+          <p class="text-xs text-gray-600 mb-3">
+            Representación técnica a escala de la geometría de zapata, columnas de arranque y disposición de la malla de refuerzo ortogonal en ambas direcciones (Planta y Elevación).
+          </p>
+
+          <div class="border border-gray-300 rounded-xl overflow-hidden bg-white p-3 shadow-xs">
+            <svg viewBox="0 0 880 460" class="w-full h-auto bg-[#FFFFFF] select-none">
+              <!-- Borde perimetral estilo lámina de plano -->
+              <rect x="5" y="5" width="870" height="450" fill="none" stroke="#183B2F" stroke-width="1.8" />
+              <rect x="8" y="8" width="864" height="444" fill="none" stroke="#94A3B8" stroke-width="0.8" />
+
+              <!-- IZQUIERDA: DETALLE EN PLANTA -->
+              <g transform="translate(225, 205)">
+                <!-- Ejes de referencia estructural -->
+                <g stroke="#94A3B8" stroke-width="0.9" stroke-dasharray="5,3">
+                  <line x1="-165" y1="0" x2="165" y2="0" />
+                  <line x1="0" y1="-150" x2="0" y2="150" />
+                </g>
+                <circle cx="-178" cy="0" r="10" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text x="-178" y="3.5" fill="#183B2F" font-size="9" font-weight="bold" text-anchor="middle">A</text>
+                <circle cx="178" cy="0" r="10" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text x="178" y="3.5" fill="#183B2F" font-size="9" font-weight="bold" text-anchor="middle">A'</text>
+
+                <circle cx="0" cy="-160" r="10" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text x="0" y="-156.5" fill="#183B2F" font-size="9" font-weight="bold" text-anchor="middle">1</text>
+                <circle cx="0" cy="160" r="10" fill="#FFFFFF" stroke="#183B2F" stroke-width="1.2" />
+                <text x="0" y="163.5" fill="#183B2F" font-size="9" font-weight="bold" text-anchor="middle">1'</text>
+
+                <text x="0" y="-175" fill="#183B2F" font-size="13" font-weight="bold" text-anchor="middle">PLANTA DE CIMENTACIÓN</text>
+                <text x="0" y="-163" fill="#64748B" font-size="9.5" text-anchor="middle">Escala Ref. 1:25 | Acero en Ambas Direcciones</text>
+
+                <!-- Zapata B x L -->
+                <rect x="-135" y="-120" width="270" height="240" fill="#F8FAFC" stroke="#183B2F" stroke-width="2.2" />
+
+                <!-- Malla en Dirección L (Verticales) -->
+                <g id="repPlantaBarsL"></g>
+                <!-- Malla en Dirección B (Horizontales) -->
+                <g id="repPlantaBarsB"></g>
+
+                <!-- Columna centrada -->
+                <rect x="-25" y="-25" width="50" height="50" fill="#183B2F" stroke="#0F241D" stroke-width="1.6" />
+                <line x1="-25" y1="-25" x2="25" y2="25" stroke="#FFFFFF" stroke-width="0.8" opacity="0.6" />
+                <line x1="25" y1="-25" x2="-25" y2="25" stroke="#FFFFFF" stroke-width="0.8" opacity="0.6" />
+                <text id="repPlanColText" x="0" y="-32" fill="#183B2F" font-size="10" font-weight="bold" text-anchor="middle">Col. 20x20</text>
+
+                <!-- Cotas B y L -->
+                <line x1="-135" y1="140" x2="135" y2="140" stroke="#183B2F" stroke-width="1.2" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <text id="repPlanDimB" x="0" y="155" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">B = 2.00 m</text>
+
+                <line x1="155" y1="-120" x2="155" y2="120" stroke="#183B2F" stroke-width="1.2" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <text id="repPlanDimL" x="175" y="4" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle" transform="rotate(90, 175, 4)">L = 2.00 m</text>
+
+                <!-- Llamadas de Armadura -->
+                <text id="repPlanCalloutL" x="-125" y="90" fill="#C97A3E" font-size="9.5" font-weight="bold" text-anchor="end">Dir. L: 9 Ø 3/4" @ 21.6 cm</text>
+                <text id="repPlanCalloutB" x="125" y="-100" fill="#1E4838" font-size="9.5" font-weight="bold">Dir. B: 9 Ø 3/4" @ 21.6 cm</text>
+              </g>
+
+              <!-- Divisor -->
+              <line x1="450" y1="15" x2="450" y2="395" stroke="#E2E8F0" stroke-width="1.2" stroke-dasharray="6,4" />
+
+              <!-- DERECHA: CORTE A-A' EN ELEVACIÓN -->
+              <g transform="translate(650, 215)">
+                <text x="0" y="-180" fill="#183B2F" font-size="13" font-weight="bold" text-anchor="middle">CORTE A-A' (ELEVACIÓN)</text>
+                <text x="0" y="-165" fill="#64748B" font-size="10" text-anchor="middle">Escala Ref. 1:25 | Detalle de Anclaje y Recubrimiento</text>
+
+                <line x1="-170" y1="-110" x2="170" y2="-110" stroke="#64748B" stroke-width="1.4" stroke-dasharray="5,3" />
+                <text x="-160" y="-116" fill="#475569" font-size="10" fontWeight="bold">N.T.N. ±0.00</text>
+
+                <!-- Solado pobre e=10cm debajo de zapata -->
+                <rect x="-140" y="70" width="280" height="15" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1" />
+                <text x="0" y="81" fill="#64748B" font-size="9" text-anchor="middle">Solado de Concreto e=10cm (f'c=100 kg/cm²)</text>
+
+                <!-- Zapata -->
+                <rect x="-135" y="0" width="270" height="70" fill="#F8FAFC" stroke="#183B2F" stroke-width="2.2" />
+
+                <!-- Columna -->
+                <rect x="-25" y="-140" width="50" height="140" fill="#183B2F" stroke="#0F241D" stroke-width="1.5" />
+                <text x="0" y="-70" fill="#FFFFFF" font-size="10" font-weight="bold" text-anchor="middle">Columna</text>
+
+                <!-- Dowels arranques -->
+                <path id="repElevDowelL" d="M-18,-135 L-18,52 L-55,52" fill="none" stroke="#F59E0B" stroke-width="2.4" stroke-linecap="round" />
+                <path id="repElevDowelR" d="M18,-135 L18,52 L55,52" fill="none" stroke="#F59E0B" stroke-width="2.4" stroke-linecap="round" />
+
+                <!-- Malla con recubrimiento dinámico -->
+                <path id="repElevRebarPath" d="M-120,45 L-120,58 L120,58 L120,45" fill="none" stroke="#C97A3E" stroke-width="2.6" stroke-linecap="round" />
+                <g id="repElevRebarCircles">
+                  <circle cx="-90" cy="52" r="2.5" fill="#1E4838" />
+                  <circle cx="-45" cy="52" r="2.5" fill="#1E4838" />
+                  <circle cx="0" cy="52" r="2.5" fill="#1E4838" />
+                  <circle cx="45" cy="52" r="2.5" fill="#1E4838" />
+                  <circle cx="90" cy="52" r="2.5" fill="#1E4838" />
+                </g>
+
+                <!-- Cotas de Elevación -->
+                <line x1="150" y1="0" x2="150" y2="70" stroke="#183B2F" stroke-width="1.2" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <text id="repElevDimH" x="175" y="38" fill="#183B2F" font-size="10" font-weight="bold">h = 55 cm</text>
+
+                <line id="repElevDimDLine" x1="-150" y1="0" x2="-150" y2="54" stroke="#183B2F" stroke-width="1.2" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <text id="repElevDimD" x="-195" y="30" fill="#183B2F" font-size="10" font-weight="bold">d = 45.6 cm</text>
+
+                <line id="repElevDimRLine" x1="-150" y1="54" x2="-150" y2="70" stroke="#64748B" stroke-width="1.2" marker-start="url(#svArrowMuted)" marker-end="url(#svArrowMuted)" />
+                <text id="repElevDimR" x="-195" y="65" fill="#64748B" font-size="9" font-weight="bold">r = 7.5 cm</text>
+
+                <line x1="-165" y1="-110" x2="-165" y2="70" stroke="#183B2F" stroke-width="1.2" marker-start="url(#svArrow)" marker-end="url(#svArrow)" />
+                <text id="repElevDimDf" x="-195" y="-20" fill="#183B2F" font-size="10" font-weight="bold">Df = 1.00 m</text>
+                <text id="repElevNfc" x="80" y="105" fill="#475569" font-size="9">N.F.C. = -1.00 m</text>
+              </g>
+
+              <!-- PIE DE LÁMINA -->
+              <g transform="translate(15, 405)">
+                <rect x="0" y="0" width="850" height="42" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1" rx="4" />
+                <text x="12" y="16" fill="#183B2F" font-size="10" font-weight="bold">ESPECIFICACIONES TÉCNICAS:</text>
+                <text id="repPlanoSpecs1" x="175" y="16" fill="#334155" font-size="9">f'c = 210 kg/cm² | Fy = 4200 kg/cm² | r = 7.5 cm | Solado e=10cm f'c=100 kg/cm²</text>
+                <text x="12" y="32" fill="#183B2F" font-size="10" font-weight="bold">RESUMEN ESTRUCTURAL:</text>
+                <text id="repPlanoSpecs2" x="175" y="32" fill="#334155" font-size="9">Zapata 2.00x2.00x0.55m | Malla: 9 3/4" @ 21.6cm | qa=1.50 kg/cm²</text>
+                <text x="830" y="24" fill="#183B2F" font-size="11" font-weight="extrabold" text-anchor="end">PLANO E-01</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="pt-8 border-t border-gray-300 grid grid-cols-2 gap-8 text-center text-xs">
+          <div>
+            <div class="border-b border-gray-400 pb-12 mb-1 w-48 mx-auto"></div>
+            <p id="repSignEng" class="font-bold text-gray-800">Ing. Estructural</p>
+            <p class="text-gray-500">Ingeniero Proyectista</p>
+          </div>
+          <div>
+            <div class="border-b border-gray-400 pb-12 mb-1 w-48 mx-auto"></div>
+            <p class="font-bold text-gray-800">Revisión y Aprobación</p>
+            <p class="text-gray-500">Dirección de Obra</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT CON LÓGICA NORMATIVA DINÁMICA -->
+  <script>
+    const REBARS = {
+      '10mm': { label: 'Ø 10 mm', db: 1.0, area: 0.79 },
+      '12mm': { label: 'Ø 12 mm', db: 1.2, area: 1.13 },
+      '16mm': { label: 'Ø 16 mm', db: 1.6, area: 2.01 },
+      '20mm': { label: 'Ø 20 mm', db: 2.0, area: 3.14 },
+      '25mm': { label: 'Ø 25 mm', db: 2.5, area: 4.91 }
+    };
+
+    let currentViewMode = 'plan';
+    let currentDimMode = 'auto';
+    let manualDefModeL = 'count';
+    let manualDefModeB = 'count';
+    let hasCalculated = false;
+
+    function setDimensionMode(mode) {
+      currentDimMode = mode;
+      const btnAuto = document.getElementById('btnModeAuto');
+      const btnManual = document.getElementById('btnModeManual');
+      const panelManual = document.getElementById('panelManualControls');
+
+      if (mode === 'manual') {
+        btnManual.className = 'px-3 py-1.5 rounded-md font-bold bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all';
+        btnAuto.className = 'px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all';
+        panelManual.style.display = 'block';
+      } else {
+        btnAuto.className = 'px-3 py-1.5 rounded-md font-bold bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all';
+        btnManual.className = 'px-3 py-1.5 rounded-md font-semibold text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all';
+        panelManual.style.display = 'none';
+      }
+      recalculate(false);
+    }
+
+    function setManualDefMode(dir, mode) {
+      if (dir === 'L') {
+        manualDefModeL = mode;
+        const btnCount = document.getElementById('btnDefLCount');
+        const btnSpacing = document.getElementById('btnDefLSpacing');
+        const boxCount = document.getElementById('boxManualLCount');
+        const boxSpacing = document.getElementById('boxManualLSpacing');
+        if (mode === 'spacing') {
+          btnSpacing.className = 'px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white';
+          btnCount.className = 'px-1.5 py-0.5 rounded font-semibold text-gray-600';
+          boxSpacing.style.display = 'block';
+          boxCount.style.display = 'none';
+        } else {
+          btnCount.className = 'px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white';
+          btnSpacing.className = 'px-1.5 py-0.5 rounded font-semibold text-gray-600';
+          boxCount.style.display = 'block';
+          boxSpacing.style.display = 'none';
+        }
+      } else {
+        manualDefModeB = mode;
+        const btnCount = document.getElementById('btnDefBCount');
+        const btnSpacing = document.getElementById('btnDefBSpacing');
+        const boxCount = document.getElementById('boxManualBCount');
+        const boxSpacing = document.getElementById('boxManualBSpacing');
+        if (mode === 'spacing') {
+          btnSpacing.className = 'px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white';
+          btnCount.className = 'px-1.5 py-0.5 rounded font-semibold text-gray-600';
+          boxSpacing.style.display = 'block';
+          boxCount.style.display = 'none';
+        } else {
+          btnCount.className = 'px-1.5 py-0.5 rounded font-semibold bg-[#183B2F] text-white';
+          btnSpacing.className = 'px-1.5 py-0.5 rounded font-semibold text-gray-600';
+          boxCount.style.display = 'block';
+          boxSpacing.style.display = 'none';
+        }
+      }
+      recalculate(false);
+    }
+
+    function onManualSpacingChange(dir) {
+      recalculate(false);
+    }
+
+    function switchView(mode) {
+      currentViewMode = mode;
+      const btnPlan = document.getElementById('btnTabPlan');
+      const btnElev = document.getElementById('btnTabElev');
+      const viewPlan = document.getElementById('svgViewPlan');
+      const viewElev = document.getElementById('svgViewElev');
+
+      if (mode === 'plan') {
+        btnPlan.className = 'px-3 py-1.5 text-xs font-bold rounded bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all';
+        btnElev.className = 'px-3 py-1.5 text-xs font-bold rounded text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all';
+        viewPlan.style.display = 'inline';
+        viewElev.style.display = 'none';
+      } else {
+        btnPlan.className = 'px-3 py-1.5 text-xs font-bold rounded text-gray-600 hover:text-[#183B2F] cursor-pointer transition-all';
+        btnElev.className = 'px-3 py-1.5 text-xs font-bold rounded bg-[#183B2F] text-white shadow-xs cursor-pointer transition-all';
+        viewPlan.style.display = 'none';
+        viewElev.style.display = 'inline';
+      }
+    }
+
+    function openModal() {
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function recalculate(userClicked) {
+      if (userClicked) {
+        hasCalculated = true;
+      }
+
+      // 1. Obtener entradas
+      const fc = parseFloat(document.getElementById('inpFc').value) || 210;
+      const fy = parseFloat(document.getElementById('inpFy').value) || 4200;
+      const rec = parseFloat(document.getElementById('inpRec').value) || 7.5;
+      const qa = parseFloat(document.getElementById('inpQa').value) || 1.5;
+      const df = parseFloat(document.getElementById('inpDf').value) || 1.0;
+      const sc = parseFloat(document.getElementById('inpSc').value) || 0.2;
+      const pcm = parseFloat(document.getElementById('inpPcm').value) || 0;
+      const pcv = parseFloat(document.getElementById('inpPcv').value) || 0;
+      const mcm = parseFloat(document.getElementById('inpMcm').value) || 0;
+      const mcv = parseFloat(document.getElementById('inpMcv').value) || 0;
+      const bCol = parseFloat(document.getElementById('inpBcol').value) || 20;
+      const tCol = parseFloat(document.getElementById('inpTcol').value) || 20;
+      const barKeyBase = document.getElementById('inpBar').value || '16mm';
+      const normative = document.getElementById('inpNormative').value;
+
+      // Cargas
+      const ps = pcm + pcv;
+      const ms = mcm + mcv;
+      const pu = normative === 'ACI 318-19' ? (1.2 * pcm + 1.6 * pcv) : (1.4 * pcm + 1.7 * pcv);
+
+      document.getElementById('loadSummary').innerText = 'Ps = ' + ps.toFixed(2) + ' Tn | Pu = ' + pu.toFixed(2) + ' Tn';
+
+      // Capacidad Neta y Dimensionamiento
+      const qn = Math.max(0.1, qa - (df * 2.0 + sc) / 10);
+      const aReq = ps / (qn * 10);
+
+      // Determinación de B, L y h según modo
+      let b, l, h;
+      const sideOptimo = Math.max(1.0, Math.ceil(Math.sqrt(aReq) * 20) / 20);
+
+      const barKeyL = currentDimMode === 'manual' ? (document.getElementById('inpManualBarL').value || barKeyBase) : barKeyBase;
+      const barKeyB = currentDimMode === 'manual' ? (document.getElementById('inpManualBarB').value || barKeyBase) : barKeyBase;
+      const barL = REBARS[barKeyL] || REBARS['16mm'];
+      const barB = REBARS[barKeyB] || REBARS['16mm'];
+      const dbMax = Math.max(barL.db, barB.db);
+
+      // Anclaje y altura h
+      const ld = Math.max((0.08 * dbMax * fy) / Math.sqrt(fc), 0.004 * dbMax * fy, 20);
+      const hMin = Math.ceil((Math.max(ld, 35) + 20) / 5) * 5;
+
+      if (currentDimMode === 'auto') {
+        b = sideOptimo;
+        l = sideOptimo;
+        h = Math.max(40, hMin);
+      } else {
+        b = Math.max(0.5, parseFloat(document.getElementById('inpManualB').value) || 2.0);
+        l = Math.max(0.5, parseFloat(document.getElementById('inpManualL').value) || 2.0);
+        h = Math.max(25, parseFloat(document.getElementById('inpManualH').value) || 55);
+      }
+
+      // REQUERIMIENTO 1: VERIFICACIÓN ESTRICTA DEL ÁREA (Az >= Areq)
+      const area = b * l;
+      const isAreaOk = area >= (aReq * 0.999);
+
+      // Banner en Modo Manual
+      const banner = document.getElementById('manualAreaBanner');
+      if (banner) {
+        if (!isAreaOk) {
+          banner.className = 'p-2.5 rounded-lg text-xs bg-red-100 border border-red-300 text-red-900 flex items-center justify-between font-medium';
+          banner.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation text-red-600 mr-1.5"></i><strong>ERROR DE DIMENSIONAMIENTO:</strong> Área Az = ${area.toFixed(2)} m² &lt; Areq = ${aReq.toFixed(2)} m² (INSUFICIENTE)</span><span class="font-bold text-red-700 bg-red-200 px-2 py-0.5 rounded">NO CUMPLE</span>`;
+        } else {
+          banner.className = 'p-2.5 rounded-lg text-xs bg-emerald-50 border border-emerald-300 text-emerald-800 flex items-center justify-between font-medium';
+          banner.innerHTML = `<span><i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>Área suficiente: Az = ${area.toFixed(2)} m² ≥ Areq = ${aReq.toFixed(2)} m² (CONFORME)</span><span class="font-bold text-emerald-800 bg-emerald-200 px-2 py-0.5 rounded">d = ${(h - rec - dbMax).toFixed(1)} cm</span>`;
+        }
+      }
+
+      // REQUERIMIENTO 2: Peralte efectivo d dinámico en tiempo real: d = h - r - db
+      const d = Math.max(10, Math.round((h - rec - dbMax) * 10) / 10);
+
+      // Capacidad Neta y Presión de Contacto
+      const baseQ = ps / area;
+      const flexQ = ms !== 0 ? (ms * (l / 2)) / ((b * Math.pow(l, 3)) / 12) : 0;
+      const qMax = (baseQ + flexQ) / 10; // kg/cm²
+      const isSoilOk = qMax <= (qa * 1.0001);
+
+      // Cortante 1 vía (Flexión)
+      const qu = pu / area;
+      const lvL = Math.max(0, (l - tCol / 100) / 2);
+      const lvB = Math.max(0, (b - bCol / 100) / 2);
+      const critDistL = Math.max(0, lvL - d / 100);
+      const critDistB = Math.max(0, lvB - d / 100);
+      const vuL = qu * critDistL * b;
+      const vuB = qu * critDistB * l;
+      const vuFlex = Math.max(vuL, vuB);
+      const widthForShearCm = (critDistL >= critDistB ? b : l) * 100;
+      const phiVcFlex = (0.85 * 0.53 * Math.sqrt(fc) * widthForShearCm * d) / 1000;
+      const isFlexOk = vuFlex <= (phiVcFlex * 1.0001);
+
+      // Punzonamiento (2 vías)
+      const bo = 2 * (bCol + d) + 2 * (tCol + d);
+      const ap = ((bCol + d) / 100) * ((tCol + d) / 100);
+      const vuPunz = Math.max(0, qu * (area - ap));
+      const betaC = Math.max(tCol / bCol, bCol / tCol, 1.0);
+      const factorPunz = Math.min(0.53 + 1.1 / betaC, 1.06);
+      const phiVcPunz = (0.85 * factorPunz * Math.sqrt(fc) * bo * d) / 1000;
+      const isPunzOk = vuPunz <= (phiVcPunz * 1.0001);
+
+      // Diseño a Flexión y Refuerzo de Acero
+      const muL = qu * (Math.pow(lvL, 2) / 2) * b; // Tn.m
+      const muB = qu * (Math.pow(lvB, 2) / 2) * l; // Tn.m
+      const asMinPerM = (0.7 * Math.sqrt(fc) / fy) * 100 * d;
+
+      // As en L
+      const muKgcmL = (muL / b) * 100000;
+      const termL = Math.max(0, Math.pow(d, 2) - (2 * muKgcmL) / (0.9 * 0.85 * fc * 100));
+      const aL = d - Math.sqrt(termL);
+      const asReqPerML = muKgcmL > 0 ? (muKgcmL / (0.9 * fy * Math.max(0.1, d - aL / 2))) : asMinPerM;
+      const asTotalL = Math.max(asMinPerM, asReqPerML) * b;
+
+      // As en B
+      const muKgcmB = (muB / l) * 100000;
+      const termB = Math.max(0, Math.pow(d, 2) - (2 * muKgcmB) / (0.9 * 0.85 * fc * 100));
+      const aB = d - Math.sqrt(termB);
+      const asReqPerMB = muKgcmB > 0 ? (muKgcmB / (0.9 * fy * Math.max(0.1, d - aB / 2))) : asMinPerM;
+      const asTotalB = Math.max(asMinPerM, asReqPerMB) * l;
+
+      // Cantidad de Varillas y Espaciamientos (Independiente)
+      const clearWidthLCm = Math.max(10, b * 100 - 2 * rec - barL.db);
+      const clearWidthBCm = Math.max(10, l * 100 - 2 * rec - barB.db);
+
+      let nBarsL, nBarsB;
+      if (currentDimMode === 'manual') {
+        if (manualDefModeL === 'spacing') {
+          const sWanted = Math.max(7, parseFloat(document.getElementById('inpManualSpacingL').value) || 20);
+          nBarsL = Math.max(2, Math.floor(clearWidthLCm / sWanted) + 1);
+        } else {
+          nBarsL = Math.max(2, parseInt(document.getElementById('inpManualNBarsL').value) || 9);
+        }
+
+        if (manualDefModeB === 'spacing') {
+          const sWanted = Math.max(7, parseFloat(document.getElementById('inpManualSpacingB').value) || 20);
+          nBarsB = Math.max(2, Math.floor(clearWidthBCm / sWanted) + 1);
+        } else {
+          nBarsB = Math.max(2, parseInt(document.getElementById('inpManualNBarsB').value) || 9);
+        }
+      } else {
+        nBarsL = Math.max(3, Math.ceil(asTotalL / barL.area));
+        nBarsB = Math.max(3, Math.ceil(asTotalB / barB.area));
+      }
+
+      const spacingL = Math.round((clearWidthLCm / Math.max(1, nBarsL - 1)) * 10) / 10;
+      const spacingB = Math.round((clearWidthBCm / Math.max(1, nBarsB - 1)) * 10) / 10;
+      const maxSpacing = Math.min(30, Math.round(2 * h));
+      const isSpacingOk = spacingL <= maxSpacing && spacingB <= maxSpacing && spacingL >= 7 && spacingB >= 7;
+
+      const asProvidedL = Math.round(nBarsL * barL.area * 100) / 100;
+      const asProvidedB = Math.round(nBarsB * barB.area * 100) / 100;
+      const isSteelOkL = asProvidedL >= (asTotalL * 0.999);
+      const isSteelOkB = asProvidedB >= (asTotalB * 0.999);
+      const isSteelOk = isSteelOkL && isSteelOkB;
+
+      // Actualizar preview en panel manual
+      const prevSpL = document.getElementById('previewSpacingL');
+      const prevAsL = document.getElementById('previewAsL');
+      if (prevSpL && prevAsL) {
+        prevSpL.innerHTML = `Espaciamiento: <strong>@ ${spacingL} cm</strong> (${nBarsL} varillas)`;
+        prevAsL.innerHTML = `As colocado: <strong>${asProvidedL.toFixed(2)} cm²</strong>`;
+      }
+      const prevSpB = document.getElementById('previewSpacingB');
+      const prevAsB = document.getElementById('previewAsB');
+      if (prevSpB && prevAsB) {
+        prevSpB.innerHTML = `Espaciamiento: <strong>@ ${spacingB} cm</strong> (${nBarsB} varillas)`;
+        prevAsB.innerHTML = `As colocado: <strong>${asProvidedB.toFixed(2)} cm²</strong>`;
+      }
+
+      // REQUERIMIENTO 1 & 2: Actualizar esquema técnico SVG (Planta y Elevación)
+      const recPx = Math.max(8, Math.min(36, Math.round((rec / h) * 80)));
+      const yFootingTop = 270;
+      const yFootingBottom = 350;
+      const yRebarLong = yFootingBottom - recPx;
+      const yRebarTrans = yRebarLong - 5;
+      const dPx = yRebarLong - yFootingTop;
+
+      // Badge dinámico d en el input
+      const badgeDynD = document.getElementById('badgeDynD');
+      if (badgeDynD) {
+        badgeDynD.textContent = 'd = ' + d.toFixed(1) + ' cm';
+      }
+
+      // SVG Elevación: cargas Pu y Ps (completas en la parte superior con margen despejado)
+      document.getElementById('svgElevPu').textContent = 'Pu = ' + pu.toFixed(2) + ' Tn (Diseño)';
+      document.getElementById('svgElevPs').textContent = 'Ps = ' + ps.toFixed(2) + ' Tn (Servicio)';
+      document.getElementById('svgElevDimH').textContent = 'h = ' + h + ' cm';
+      document.getElementById('svgElevDimDText').textContent = 'd = ' + d.toFixed(1) + ' cm';
+      document.getElementById('svgElevDimRText').textContent = 'r = ' + rec + ' cm';
+      document.getElementById('svgElevDimDf').textContent = 'Df = ' + df.toFixed(2) + ' m';
+      document.getElementById('svgElevQmax').textContent = 'q_max = ' + qMax.toFixed(2) + ' kg/cm²';
+      document.getElementById('svgElevQa').textContent = 'qa = ' + qa.toFixed(2) + ' kg/cm²';
+
+      // Posicionamiento de cotas y rebar en elevación
+      const dimDLine = document.getElementById('svgElevDimDLine');
+      if (dimDLine) {
+        dimDLine.setAttribute('y1', yFootingTop);
+        dimDLine.setAttribute('y2', yRebarLong);
+      }
+      const dimDBox = document.getElementById('svgElevDimDBox');
+      const dimDText = document.getElementById('svgElevDimDText');
+      if (dimDBox && dimDText) {
+        dimDBox.setAttribute('y', yFootingTop + dPx / 2 - 12);
+        dimDText.setAttribute('y', yFootingTop + dPx / 2 + 5);
+      }
+
+      const dimRLine = document.getElementById('svgElevDimRLine');
+      if (dimRLine) {
+        dimRLine.setAttribute('y1', yRebarLong);
+        dimRLine.setAttribute('y2', yFootingBottom);
+      }
+      const dimRBox = document.getElementById('svgElevDimRBox');
+      const dimRText = document.getElementById('svgElevDimRText');
+      if (dimRBox && dimRText) {
+        dimRBox.setAttribute('y', yRebarLong + recPx / 2 - 10);
+        dimRText.setAttribute('y', yRebarLong + recPx / 2 + 4);
+      }
+
+      const dowelL = document.getElementById('svgElevDowelL');
+      const dowelR = document.getElementById('svgElevDowelR');
+      if (dowelL && dowelR) {
+        dowelL.setAttribute('d', `M-24,150 L-24,${yRebarTrans} L-75,${yRebarTrans}`);
+        dowelR.setAttribute('d', `M24,150 L24,${yRebarTrans} L75,${yRebarTrans}`);
+      }
+
+      let rebarElevHtml = `
+        <path d="M-180,${yRebarLong - 20} L-180,${yRebarLong} L180,${yRebarLong} L180,${yRebarLong - 20}" fill="none" stroke="#C97A3E" stroke-width="3.4" stroke-linecap="round"/>
+      `;
+      [-150, -110, -70, -30, 10, 50, 90, 130, 160].forEach(x => {
+        rebarElevHtml += `<circle cx="${x}" cy="${yRebarTrans}" r="3.2" fill="#1E4838" stroke="#FFFFFF" stroke-width="0.8"/>`;
+      });
+      rebarElevHtml += `<text x="0" y="${yRebarLong + 16}" fill="#183B2F" font-size="11" font-weight="bold" text-anchor="middle">Parrilla Inferior (${nBarsL} ${barL.label} @ ${spacingL} cm | r=${rec} cm)</text>`;
+      document.getElementById('svgElevRebarGroup').innerHTML = rebarElevHtml;
+
+      // SVG Planta
+      document.getElementById('svgPlanDimB').textContent = 'B = ' + b.toFixed(2) + ' m';
+      document.getElementById('svgPlanDimL').textContent = 'L = ' + l.toFixed(2) + ' m';
+      document.getElementById('svgPlanColText').textContent = bCol + ' x ' + tCol;
+      document.getElementById('svgPlanCritText').textContent = 'Zona crítica bo = ' + bo.toFixed(1) + ' cm (a d/2)';
+
+      let rebarPlanHtml = '';
+      const nBarsShowL = Math.min(nBarsL, 10);
+      for (let i = 0; i < nBarsShowL; i++) {
+        const xPos = -140 + i * (280 / (nBarsShowL - 1));
+        rebarPlanHtml += `<line x1="${xPos}" y1="-140" x2="${xPos}" y2="140" stroke="#C97A3E" stroke-width="2.4" stroke-linecap="round"/>`;
+        rebarPlanHtml += `<line x1="${xPos}" y1="-140" x2="${xPos + 8}" y2="-140" stroke="#C97A3E" stroke-width="2.4"/>`;
+        rebarPlanHtml += `<line x1="${xPos}" y1="140" x2="${xPos + 8}" y2="140" stroke="#C97A3E" stroke-width="2.4"/>`;
+      }
+      const nBarsShowB = Math.min(nBarsB, 8);
+      for (let j = 0; j < nBarsShowB; j++) {
+        const yPos = -140 + j * (280 / Math.max(1, nBarsShowB - 1));
+        rebarPlanHtml += `<line x1="-140" y1="${yPos}" x2="140" y2="${yPos}" stroke="#1E4838" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="6,2"/>`;
+        rebarPlanHtml += `<line x1="-140" y1="${yPos}" x2="-140" y2="${yPos - 8}" stroke="#1E4838" stroke-width="2.2"/>`;
+        rebarPlanHtml += `<line x1="140" y1="${yPos}" x2="140" y2="${yPos - 8}" stroke="#1E4838" stroke-width="2.2"/>`;
+      }
+      // Llamadas con flecha en planta
+      rebarPlanHtml += `<line x1="-80" y1="80" x2="-160" y2="120" stroke="#C97A3E" stroke-width="1.4"/>`;
+      rebarPlanHtml += `<line x1="-160" y1="120" x2="-230" y2="120" stroke="#C97A3E" stroke-width="1.4"/>`;
+      rebarPlanHtml += `<circle cx="-80" cy="80" r="3.5" fill="#C97A3E"/>`;
+      rebarPlanHtml += `<text x="-165" y="114" fill="#C97A3E" font-size="11" font-weight="bold" text-anchor="end">Dir. L: ${nBarsL} ${barL.label} @ ${spacingL} cm</text>`;
+
+      rebarPlanHtml += `<line x1="80" y1="-70" x2="160" y2="-120" stroke="#1E4838" stroke-width="1.4"/>`;
+      rebarPlanHtml += `<line x1="160" y1="-120" x2="230" y2="-120" stroke="#1E4838" stroke-width="1.4"/>`;
+      rebarPlanHtml += `<circle cx="80" cy="-70" r="3.5" fill="#1E4838"/>`;
+      rebarPlanHtml += `<text x="165" y="-125" fill="#1E4838" font-size="11" font-weight="bold">Dir. B: ${nBarsB} ${barB.label} @ ${spacingB} cm</text>`;
+
+      document.getElementById('svgPlanRebar').innerHTML = rebarPlanHtml;
+
+      // Leyenda lateral independiente
+      document.getElementById('legFc').textContent = `f'c = ${fc} kg/cm²`;
+      document.getElementById('legFy').textContent = `Fy ${fy} (${barL.label})`;
+      document.getElementById('legRec').textContent = `r = ${rec} cm | d = ${d.toFixed(1)} cm`;
+      document.getElementById('legBo').textContent = `Perímetro bo = ${bo.toFixed(1)} cm (a d/2)`;
+      document.getElementById('legPuText').textContent = pu.toFixed(2) + ' Tn';
+      document.getElementById('legPsText').textContent = ps.toFixed(2) + ' Tn';
+      document.getElementById('legQmaxText').textContent = qMax.toFixed(2) + ' kg/cm²';
+      document.getElementById('legQmaxText').className = isSoilOk ? 'text-emerald-700 font-mono' : 'text-red-700 font-mono';
+
+      // REQUERIMIENTO 3: Condicionalidad de resultados
+      if (hasCalculated) {
+        document.getElementById('resultsPendingBox').style.display = 'none';
+        document.getElementById('resultsContent').style.display = 'block';
+
+        // 4 Tarjetas KPI principales directamente debajo del botón
+        document.getElementById('kpiDimPlanta').textContent = `${b.toFixed(2)} x ${l.toFixed(2)} m`;
+        document.getElementById('kpiAreaPlanta').textContent = `Área Az = ${area.toFixed(2)} m² (Req: ${aReq.toFixed(2)} m²)`;
+        document.getElementById('kpiEspesorPeralte').textContent = `h = ${h} cm | d = ${d} cm`;
+        document.getElementById('kpiRecubrimiento').textContent = `Recubrimiento r = ${rec} cm`;
+        document.getElementById('kpiArmaduraL').textContent = `${nBarsL} ${barL.label} @ ${spacingL} cm`;
+        document.getElementById('kpiAsReqL').textContent = `As: ${asProvidedL.toFixed(2)} / Req: ${asTotalL.toFixed(2)} cm²`;
+        document.getElementById('kpiArmaduraB').textContent = `${nBarsB} ${barB.label} @ ${spacingB} cm`;
+        document.getElementById('kpiAsReqB').textContent = `As: ${asProvidedB.toFixed(2)} / Req: ${asTotalB.toFixed(2)} cm²`;
+
+        // REQUERIMIENTO 1: ALERTA ESTRICTA EN ROJO SI Az < Areq EN KPI CARD
+        const kpiCardDim = document.getElementById('kpiCardDim');
+        const kpiDimPlanta = document.getElementById('kpiDimPlanta');
+        const kpiAreaBadge = document.getElementById('kpiAreaBadge');
+        if (!isAreaOk) {
+          kpiCardDim.className = 'bg-red-50 border-2 border-red-500 p-3.5 rounded-xl text-center shadow-xs transition-all';
+          kpiDimPlanta.className = 'font-extrabold text-red-700 text-base sm:text-lg block mt-1';
+          kpiAreaBadge.className = 'inline-block mt-1 px-2 py-0.5 text-[10px] font-extrabold rounded bg-red-600 text-white animate-pulse';
+          kpiAreaBadge.textContent = 'NO CUMPLE (Az < Areq)';
+        } else {
+          kpiCardDim.className = 'bg-[#F7F7F2] border border-gray-200 p-3.5 rounded-xl text-center shadow-xs transition-all';
+          kpiDimPlanta.className = 'font-extrabold text-[#183B2F] text-base sm:text-lg block mt-1';
+          kpiAreaBadge.className = 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]';
+          kpiAreaBadge.textContent = 'OK (Az ≥ Areq)';
+        }
+
+        // Badges de Acero en KPI Cards
+        const kpiSteelBadgeL = document.getElementById('kpiSteelBadgeL');
+        if (kpiSteelBadgeL) {
+          kpiSteelBadgeL.className = isSteelOkL ? 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]' : 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500 text-white';
+          kpiSteelBadgeL.textContent = isSteelOkL ? 'As CONFORME' : 'As INSUFICIENTE';
+        }
+        const kpiSteelBadgeB = document.getElementById('kpiSteelBadgeB');
+        if (kpiSteelBadgeB) {
+          kpiSteelBadgeB.className = isSteelOkB ? 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-[#D2E3D8] text-[#183B2F]' : 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500 text-white';
+          kpiSteelBadgeB.textContent = isSteelOkB ? 'As CONFORME' : 'As INSUFICIENTE';
+        }
+
+        // KPIs auxiliares
+        document.getElementById('kpiQmax').textContent = qMax.toFixed(2);
+        document.getElementById('kpiQaSub').textContent = `/ ${qa.toFixed(2)} kg/cm²`;
+        document.getElementById('kpiVuFlex').textContent = vuFlex.toFixed(1);
+        document.getElementById('kpiPhiVcFlex').textContent = `/ ØVc ${phiVcFlex.toFixed(1)} Tn`;
+        document.getElementById('kpiVuPunz').textContent = vuPunz.toFixed(1);
+        document.getElementById('kpiPhiVcPunz').textContent = `/ ØVc ${phiVcPunz.toFixed(1)} Tn`;
+        document.getElementById('kpiSpacingVal').textContent = `S = ${Math.max(spacingL, spacingB)} cm ≤ ${maxSpacing} cm`;
+
+        // Tablas
+        document.getElementById('tdArea').textContent = `${b.toFixed(2)} x ${l.toFixed(2)} m (Az=${area.toFixed(2)} m²)`;
+        document.getElementById('tdAreq').textContent = `Req: ${aReq.toFixed(2)} m²`;
+        const tdAreaRow = document.getElementById('tdArea').parentElement;
+        if (tdAreaRow) {
+          tdAreaRow.className = !isAreaOk ? 'bg-red-50 text-red-900 font-bold' : '';
+        }
+        document.getElementById('tdQmax').textContent = `${qMax.toFixed(2)} kg/cm²`;
+        document.getElementById('tdQa').textContent = `qa = ${qa.toFixed(2)} kg/cm²`;
+        document.getElementById('tdSoilStatus').innerHTML = isSoilOk ? '<span class="text-emerald-700 font-bold">OK</span>' : '<span class="text-red-700 font-bold">EXCEDIDO</span>';
+        document.getElementById('tdVuFlex').textContent = `${vuFlex.toFixed(2)} Tn`;
+        document.getElementById('tdPhiVcFlex').textContent = `ØVc = ${phiVcFlex.toFixed(2)} Tn`;
+        document.getElementById('tdFlexStatus').innerHTML = isFlexOk ? '<span class="text-emerald-700 font-bold">CONFORME</span>' : '<span class="text-red-700 font-bold">NO CUMPLE</span>';
+        document.getElementById('tdVuPunz').textContent = `${vuPunz.toFixed(2)} Tn`;
+        document.getElementById('tdPhiVcPunz').textContent = `ØVc = ${phiVcPunz.toFixed(2)} Tn`;
+        document.getElementById('tdPunzStatus').innerHTML = isPunzOk ? '<span class="text-emerald-700 font-bold">CONFORME</span>' : '<span class="text-red-700 font-bold">NO CUMPLE</span>';
+        document.getElementById('tdAsReq').textContent = `L: ${asTotalL.toFixed(1)} cm² | B: ${asTotalB.toFixed(1)} cm²`;
+        document.getElementById('tdAsBar').textContent = `L: ${nBarsL} ${barL.label} | B: ${nBarsB} ${barB.label}`;
+        document.getElementById('tdSpacing').textContent = `@ ${spacingL}/${spacingB} cm (${isSpacingOk ? 'OK' : 'AJUSTAR'})`;
+      }
+
+      // REQUERIMIENTO 1: Estado Global estricto (NO CUMPLE si Az < Areq)
+      const isAllOk = isAreaOk && isSoilOk && isFlexOk && isPunzOk && isSpacingOk && isSteelOk;
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusBadgeText');
+
+      if (!isAreaOk) {
+        statusBadge.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-100 text-red-900 border border-red-400 font-bold text-xs sm:text-sm animate-pulse';
+        statusText.textContent = 'NO CUMPLE (Az < Areq)';
+      } else if (isAllOk) {
+        statusBadge.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D2E3D8] text-[#183B2F] border border-[#A3D1B4] font-bold text-xs sm:text-sm';
+        statusText.textContent = 'CONFORME / OK';
+      } else {
+        statusBadge.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-100 text-red-900 border border-red-300 font-bold text-xs sm:text-sm';
+        statusText.textContent = 'NO CUMPLE REQUERIMIENTOS';
+      }
+
+      // REQUERIMIENTO 4: Actualizar Memoria de Cálculo y Plano Constructivo E-01
+      const proj = document.getElementById('inpProject').value || 'Proyecto Cimentación';
+      const code = document.getElementById('inpCode').value || 'Z-01';
+      const eng = document.getElementById('inpEngineer').value || 'Ing. Proyectista';
+
+      document.getElementById('repProject').textContent = proj;
+      document.getElementById('repCodeBadge').textContent = 'CÓDIGO: ' + code;
+      document.getElementById('repEngineer').textContent = eng;
+      document.getElementById('repSignEng').textContent = eng;
+      document.getElementById('repNormText').textContent = 'Cálculo Geotécnico y Estructural según norma ' + normative;
+
+      document.getElementById('repFc').textContent = fc;
+      document.getElementById('repFy').textContent = fy;
+      document.getElementById('repRec').textContent = rec;
+      document.getElementById('repRec2').textContent = rec;
+      document.getElementById('repQa').textContent = qa.toFixed(2);
+      document.getElementById('repQa2').textContent = qa.toFixed(2);
+      document.getElementById('repDf').textContent = df.toFixed(2);
+      document.getElementById('repPcm').textContent = pcm.toFixed(2);
+      document.getElementById('repPcv').textContent = pcv.toFixed(2);
+      document.getElementById('repPs').textContent = ps.toFixed(2);
+      document.getElementById('repPu').textContent = pu.toFixed(2);
+
+      document.getElementById('repQn').textContent = qn.toFixed(3);
+      document.getElementById('repAreq').textContent = aReq.toFixed(2);
+      document.getElementById('repB').textContent = b.toFixed(2);
+      document.getElementById('repL').textContent = l.toFixed(2);
+      document.getElementById('repAz').textContent = area.toFixed(2);
+      document.getElementById('repH').textContent = h;
+      document.getElementById('repDb').textContent = dbMax.toFixed(2);
+      document.getElementById('repD').textContent = d.toFixed(1);
+
+      document.getElementById('repQmax').textContent = qMax.toFixed(2);
+      document.getElementById('repVuFlex').textContent = vuFlex.toFixed(2);
+      document.getElementById('repPhiVcFlex').textContent = phiVcFlex.toFixed(2);
+      document.getElementById('repVuPunz').textContent = vuPunz.toFixed(2);
+      document.getElementById('repPhiVcPunz').textContent = phiVcPunz.toFixed(2);
+      document.getElementById('repRebarFull').textContent = `${nBarsL} ${barL.label} @ ${spacingL} cm (L) / ${nBarsB} ${barB.label} @ ${spacingB} cm (B)`;
+      document.getElementById('repAsTotal').textContent = `L: ${asTotalL.toFixed(1)} | B: ${asTotalB.toFixed(1)}`;
+
+      // Plano E-01 en memoria de cálculo
+      document.getElementById('repPlanColText').textContent = `Col. ${bCol}x${tCol}`;
+      document.getElementById('repPlanDimB').textContent = `B = ${b.toFixed(2)} m`;
+      document.getElementById('repPlanDimL').textContent = `L = ${l.toFixed(2)} m`;
+      document.getElementById('repPlanCalloutL').textContent = `Dir. L: ${nBarsL} ${barL.label} @ ${spacingL} cm`;
+      document.getElementById('repPlanCalloutB').textContent = `Dir. B: ${nBarsB} ${barB.label} @ ${spacingB} cm`;
+
+      let bpBarsL = '';
+      for (let i = 0; i < 8; i++) {
+        const xPos = -115 + i * (230 / 7);
+        bpBarsL += `<line x1="${xPos}" y1="-105" x2="${xPos}" y2="105" stroke="#C97A3E" stroke-width="2.2" stroke-linecap="round"/>`;
+      }
+      document.getElementById('repPlantaBarsL').innerHTML = bpBarsL;
+
+      let bpBarsB = '';
+      for (let j = 0; j < 7; j++) {
+        const yPos = -95 + j * (190 / 6);
+        bpBarsB += `<line x1="-120" y1="${yPos}" x2="120" y2="${yPos}" stroke="#1E4838" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,2"/>`;
+      }
+      document.getElementById('repPlantaBarsB').innerHTML = bpBarsB;
+
+      // Cotas y armadura dinámica en Corte A-A' de Plano E-01
+      const bpRecPx = Math.max(7, Math.min(26, Math.round((rec / h) * 70)));
+      const bpYRebarLong = 70 - bpRecPx;
+      const bpYRebarTrans = bpYRebarLong - 4;
+
+      document.getElementById('repElevDimH').textContent = `h = ${h} cm`;
+      document.getElementById('repElevDimD').textContent = `d = ${d.toFixed(1)} cm`;
+      document.getElementById('repElevDimR').textContent = `r = ${rec} cm`;
+      document.getElementById('repElevDimDf').textContent = `Df = ${df.toFixed(2)} m`;
+      document.getElementById('repElevNfc').textContent = `N.F.C. = -${df.toFixed(2)} m`;
+
+      const repDLine = document.getElementById('repElevDimDLine');
+      if (repDLine) {
+        repDLine.setAttribute('y2', bpYRebarLong);
+        document.getElementById('repElevDimD').setAttribute('y', bpYRebarLong / 2 + 4);
+      }
+      const repRLine = document.getElementById('repElevDimRLine');
+      if (repRLine) {
+        repRLine.setAttribute('y1', bpYRebarLong);
+        document.getElementById('repElevDimR').setAttribute('y', bpYRebarLong + bpRecPx / 2 + 4);
+      }
+      const repDowelL = document.getElementById('repElevDowelL');
+      const repDowelR = document.getElementById('repElevDowelR');
+      if (repDowelL && repDowelR) {
+        repDowelL.setAttribute('d', `M-18,-135 L-18,${bpYRebarTrans} L-55,${bpYRebarTrans}`);
+        repDowelR.setAttribute('d', `M18,-135 L18,${bpYRebarTrans} L55,${bpYRebarTrans}`);
+      }
+      const repRebarPath = document.getElementById('repElevRebarPath');
+      if (repRebarPath) {
+        repRebarPath.setAttribute('d', `M-120,${bpYRebarLong - 14} L-120,${bpYRebarLong} L120,${bpYRebarLong} L120,${bpYRebarLong - 14}`);
+      }
+      const repCircles = document.getElementById('repElevRebarCircles');
+      if (repCircles) {
+        let circHtml = '';
+        [-100, -70, -40, -10, 10, 40, 70, 100].forEach(x => {
+          circHtml += `<circle cx="${x}" cy="${bpYRebarTrans}" r="2.5" fill="#1E4838" stroke="#FFFFFF" stroke-width="0.6"/>`;
+        });
+        repCircles.innerHTML = circHtml;
+      }
+
+      document.getElementById('repPlanoSpecs1').textContent = `f'c = ${fc} kg/cm² | Fy = ${fy} kg/cm² | r = ${rec} cm | Solado e=10cm f'c=100 kg/cm²`;
+      document.getElementById('repPlanoSpecs2').textContent = `Zapata ${b.toFixed(2)}x${l.toFixed(2)}x${(h/100).toFixed(2)}m | Malla: Dir.L ${nBarsL} ${barL.label} @ ${spacingL}cm / Dir.B ${nBarsB} ${barB.label} @ ${spacingB}cm | qa=${qa.toFixed(2)} kg/cm²`;
+    }
+
+    function exportCsv() {
+      const csv = "Parámetro,Valor,Unidad\n" +
+        "Proyecto," + document.getElementById('inpProject').value + ",-\n" +
+        "Código Zapata," + document.getElementById('inpCode').value + ",-\n" +
+        "Concreto f'c," + document.getElementById('inpFc').value + ",kg/cm²\n" +
+        "Acero Fy," + document.getElementById('inpFy').value + ",kg/cm²\n" +
+        "Recubrimiento r," + document.getElementById('inpRec').value + ",cm\n" +
+        "Capacidad Suelo qa," + document.getElementById('inpQa').value + ",kg/cm²\n" +
+        "Desplante Df," + document.getElementById('inpDf').value + ",m\n" +
+        "Carga Muerta Pcm," + document.getElementById('inpPcm').value + ",Tn\n" +
+        "Carga Viva Pcv," + document.getElementById('inpPcv').value + ",Tn\n" +
+        "Carga Ps," + document.getElementById('repPs').textContent + ",Tn\n" +
+        "Carga Pu," + document.getElementById('repPu').textContent + ",Tn\n" +
+        "Dimensión B," + document.getElementById('repB').textContent + ",m\n" +
+        "Dimensión L," + document.getElementById('repL').textContent + ",m\n" +
+        "Altura h," + document.getElementById('repH').textContent + ",cm\n" +
+        "Peralte d," + document.getElementById('repD').textContent + ",cm\n";
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Memoria_Zapata_' + document.getElementById('inpCode').value + '.csv';
+      a.click();
+    }
+
+    // Inicializar sin cálculo forzado (esperando clic)
+    window.onload = function() {
+      recalculate(false);
+    };
+  </script>
+</body>
+</html>
