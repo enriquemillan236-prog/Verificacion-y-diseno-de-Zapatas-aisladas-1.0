@@ -11,6 +11,7 @@ import {
   Info,
   ChevronDown,
   AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface InputParametersCardProps {
@@ -900,6 +901,276 @@ export const InputParametersCard: React.FC<InputParametersCardProps> = ({
           >
             Liberar a Modo Manual
           </button>
+        </div>
+      )}
+
+      {/* ========================================================
+          CONFIGURACIÓN AUTOMATIZADA DE PARRILLA SUPERIOR (KERN)
+          Se oculta y desactiva automáticamente si e <= L/6
+         ======================================================== */}
+      {results.isOutOfKern && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/50 p-4 shadow-xs transition-all animate-fadeIn">
+          {/* Encabezado del bloque de Parrilla Superior */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 border-b border-amber-200">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-600 text-white shadow-xs">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs sm:text-sm text-[#183B2F]">
+                    Parrilla Superior Obligatoria (Refuerzo por Tracción y Despegue)
+                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 animate-pulse">
+                    ⚠️ Fuera del Kern (e &gt; L/6)
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 mt-0.5">
+                  Excentricidad excesiva (e = {results.excentricidadL.toFixed(3)} m &gt; L/6 = {results.eKernL.toFixed(3)} m). Se produce despegue de la base y momentos negativos: Se activa el cálculo formal de armadura superior.
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300 shrink-0 self-start sm:self-auto">
+              Activa por Excentricidad
+            </span>
+          </div>
+
+          {/* Sección de configuración de Parrilla Superior con As mín normativo */}
+          <div className="pt-3 space-y-3">
+            <div className="text-xs font-bold text-[#183B2F] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <span>Definición de Refuerzo Superior en Ambas Direcciones:</span>
+              <span className="text-[11px] text-gray-600 font-medium">
+                Cuantía mínima normativa ACI/NTE: <strong>As_mín = 0.0018 &middot; b &middot; h</strong> ({results.topAsMinPerMeter.toFixed(2)} cm²/m)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Dirección L Superior */}
+              <div className="bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
+                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-gray-100">
+                  <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#C97A3E]"></span>
+                    Parrilla Superior Dir. L (Largo)
+                  </span>
+                  <div className="flex items-center gap-1 bg-[#F7F7F2] p-0.5 rounded border border-gray-200 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => onChange({ topDefineByL: 'count' })}
+                      className={`px-1.5 py-0.5 rounded font-semibold cursor-pointer ${
+                        inputs.topDefineByL !== 'spacing' ? 'bg-[#183B2F] text-white' : 'text-gray-600'
+                      }`}
+                    >
+                      N° Varillas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChange({ topDefineByL: 'spacing', topSpacingL: results.topSpacingL })}
+                      className={`px-1.5 py-0.5 rounded font-semibold cursor-pointer ${
+                        inputs.topDefineByL === 'spacing' ? 'bg-[#183B2F] text-white' : 'text-gray-600'
+                      }`}
+                    >
+                      Espaciamiento (s)
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      Diámetro de Varilla
+                    </label>
+                    <select
+                      value={inputs.topBarKeyL || '12mm'}
+                      onChange={(e) => onChange({ topBarKeyL: e.target.value })}
+                      className="w-full text-xs font-bold text-[#183B2F] p-1.5 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-[#183B2F]"
+                    >
+                      <option value="10mm">Ø 10 mm (0.79 cm²)</option>
+                      <option value="12mm">Ø 12 mm (1.13 cm²)</option>
+                      <option value="16mm">Ø 16 mm (2.01 cm²)</option>
+                      <option value="20mm">Ø 20 mm (3.14 cm²)</option>
+                      <option value="25mm">Ø 25 mm (4.91 cm²)</option>
+                    </select>
+                  </div>
+                  <div>
+                    {inputs.topDefineByL === 'spacing' ? (
+                      <>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Espaciamiento s (cm)
+                        </label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="7"
+                          max="40"
+                          value={inputs.topSpacingL || results.topSpacingL}
+                          onChange={(e) => onChange({ topSpacingL: Math.max(7, Number(e.target.value) || 20) })}
+                          className="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-[#183B2F]"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Cantidad de Varillas
+                        </label>
+                        <input
+                          type="number"
+                          min="2"
+                          max="60"
+                          value={inputs.topNBarsL || results.topNBarsL}
+                          onChange={(e) => onChange({ topNBarsL: Math.max(2, Number(e.target.value) || 2) })}
+                          className="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-[#183B2F]"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cálculo formal de As mín vs As provisto */}
+                <div className="mt-2.5 p-2 bg-[#F7F7F2] rounded border border-gray-200 text-[11px] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">
+                      As mín. superior (0.0018&middot;B&middot;h):
+                    </span>
+                    <strong className="font-mono text-gray-800">
+                      {results.topAsMinL.toFixed(2)} cm²
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">As colocado superior:</span>
+                    <strong className="font-mono text-[#183B2F]">
+                      {results.topAsProvidedL.toFixed(2)} cm²
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-gray-200">
+                    <span className="text-gray-500">
+                      Espaciamiento: <strong>@ {results.topSpacingL} cm</strong> ({results.topNBarsL} varillas)
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        results.isTopSteelOkL
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {results.isTopSteelOkL ? '✓ As Conforme' : '⚠️ As Insuficiente'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dirección B Superior */}
+              <div className="bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
+                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-gray-100">
+                  <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#1E4838]"></span>
+                    Parrilla Superior Dir. B (Ancho)
+                  </span>
+                  <div className="flex items-center gap-1 bg-[#F7F7F2] p-0.5 rounded border border-gray-200 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => onChange({ topDefineByB: 'count' })}
+                      className={`px-1.5 py-0.5 rounded font-semibold cursor-pointer ${
+                        inputs.topDefineByB !== 'spacing' ? 'bg-[#183B2F] text-white' : 'text-gray-600'
+                      }`}
+                    >
+                      N° Varillas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChange({ topDefineByB: 'spacing', topSpacingB: results.topSpacingB })}
+                      className={`px-1.5 py-0.5 rounded font-semibold cursor-pointer ${
+                        inputs.topDefineByB === 'spacing' ? 'bg-[#183B2F] text-white' : 'text-gray-600'
+                      }`}
+                    >
+                      Espaciamiento (s)
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      Diámetro de Varilla
+                    </label>
+                    <select
+                      value={inputs.topBarKeyB || '12mm'}
+                      onChange={(e) => onChange({ topBarKeyB: e.target.value })}
+                      className="w-full text-xs font-bold text-[#183B2F] p-1.5 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-[#183B2F]"
+                    >
+                      <option value="10mm">Ø 10 mm (0.79 cm²)</option>
+                      <option value="12mm">Ø 12 mm (1.13 cm²)</option>
+                      <option value="16mm">Ø 16 mm (2.01 cm²)</option>
+                      <option value="20mm">Ø 20 mm (3.14 cm²)</option>
+                      <option value="25mm">Ø 25 mm (4.91 cm²)</option>
+                    </select>
+                  </div>
+                  <div>
+                    {inputs.topDefineByB === 'spacing' ? (
+                      <>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Espaciamiento s (cm)
+                        </label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="7"
+                          max="40"
+                          value={inputs.topSpacingB || results.topSpacingB}
+                          onChange={(e) => onChange({ topSpacingB: Math.max(7, Number(e.target.value) || 20) })}
+                          className="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-[#183B2F]"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Cantidad de Varillas
+                        </label>
+                        <input
+                          type="number"
+                          min="2"
+                          max="60"
+                          value={inputs.topNBarsB || results.topNBarsB}
+                          onChange={(e) => onChange({ topNBarsB: Math.max(2, Number(e.target.value) || 2) })}
+                          className="w-full text-xs font-bold p-1.5 bg-white border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-[#183B2F]"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cálculo formal de As mín vs As provisto */}
+                <div className="mt-2.5 p-2 bg-[#F7F7F2] rounded border border-gray-200 text-[11px] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">
+                      As mín. superior (0.0018&middot;L&middot;h):
+                    </span>
+                    <strong className="font-mono text-gray-800">
+                      {results.topAsMinB.toFixed(2)} cm²
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">As colocado superior:</span>
+                    <strong className="font-mono text-[#183B2F]">
+                      {results.topAsProvidedB.toFixed(2)} cm²
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-gray-200">
+                    <span className="text-gray-500">
+                      Espaciamiento: <strong>@ {results.topSpacingB} cm</strong> ({results.topNBarsB} varillas)
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        results.isTopSteelOkB
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {results.isTopSteelOkB ? '✓ As Conforme' : '⚠️ As Insuficiente'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -16,6 +16,7 @@ import { TechnicalFootingSVG } from './components/TechnicalFootingSVG';
 import { ResultsPanel } from './components/ResultsPanel';
 import { CalculationReportModal } from './components/CalculationReportModal';
 import { exportFootingCsv } from './utils/exportCsv';
+import { downloadReportPdf } from './utils/exportPdf';
 import heroImage1 from './assets/images/zapata_concreto_portada_limpia_1790797895690.jpg';
 import heroImage2 from './assets/images/zapata_armado_obra_1790805955879.jpg';
 import heroImage3 from './assets/images/zapata_vaciado_concreto_1790805966764.jpg';
@@ -92,6 +93,30 @@ export default function App() {
     showToast('Archivo CSV generado y descargado con éxito');
   };
 
+  // Descarga directa y automática del archivo PDF completo (diseño, verificaciones y planos) en el cliente
+  const handleDownloadPdf = async () => {
+    const cleanProject = (inputs.projectName || 'Proyecto').trim().replace(/\s+/g, '_');
+    const cleanCode = (inputs.footingCode || 'Z1').trim().replace(/\s+/g, '_');
+    const filename = `Memoria_Calculo_${cleanCode}_${cleanProject}_Horizontal.pdf`;
+
+    showToast('Generando y descargando archivo PDF...');
+
+    try {
+      const success = await downloadReportPdf('printable-calculation-report', {
+        filename,
+      });
+
+      if (success) {
+        showToast('Archivo PDF descargado con éxito');
+      } else {
+        showToast('No se pudo generar la descarga directa del PDF');
+      }
+    } catch (err) {
+      console.error('Error al procesar descarga de PDF:', err);
+      showToast('Error al generar la descarga del PDF');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F7F2] text-slate-800 flex flex-col font-sans">
       {/* Toast Notificación */}
@@ -107,6 +132,7 @@ export default function App() {
         inputs={inputs}
         results={results}
         onOpenReportModal={() => setIsReportModalOpen(true)}
+        onDownloadPdf={handleDownloadPdf}
         onExportCsv={handleExportCsv}
         onResetDefaults={handleResetDefaults}
       />
@@ -231,7 +257,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* MODAL DE MEMORIA DE CÁLCULO FORMAL */}
+      {/* MODAL Y REPORTE IMPRIMIBLE DE MEMORIA DE CÁLCULO */}
       <CalculationReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}

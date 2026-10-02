@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+/* ============================================================
+   ESTILOS DE IMPRESIÓN Y EXPORTACIÓN A PDF EN TAMAÑO CARTA HORIZONTAL
+   ============================================================ */
+@media print {
+  @page {
+    size: letter landscape;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11px;
+  }
+
+  /* Ocultar elementos generales de la app al imprimir el reporte modal */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-calculation-report,
+  #printable-calculation-report * {
+    visibility: visible;
+  }
+
+  #printable-calculation-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Reglas de saltos y fluidez de páginas horizontales */
+  .page-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .page-break-after {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .page-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

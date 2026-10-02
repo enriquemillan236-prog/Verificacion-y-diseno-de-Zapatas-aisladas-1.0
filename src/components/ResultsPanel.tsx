@@ -31,7 +31,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
 }) => {
   const [activeStep, setActiveStep] = useState<number | 'all'>('all');
   const [calculatedPulse, setCalculatedPulse] = useState(false);
-  const [hasCalculated, setHasCalculated] = useState(false);
+  const [hasCalculated, setHasCalculated] = useState(true);
 
   const handleCalculateClick = () => {
     setHasCalculated(true);
@@ -748,6 +748,31 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         {results.nBarsB} {results.selectedBarB.label} @ {results.spacingB} cm
                       </span>
                     </div>
+
+                    {/* Parrilla Superior adicional si e > L/6 */}
+                    {results.isOutOfKern && (
+                      <>
+                        <div className="bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs flex items-center justify-between">
+                          <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#C97A3E]"></span>
+                            Parrilla Sup. Dir. L (Fuera Kern):
+                          </span>
+                          <span className="font-mono font-extrabold text-amber-950 text-xs">
+                            {results.topNBarsL} {results.topSelectedBarL.label} @ {results.topSpacingL} cm
+                          </span>
+                        </div>
+
+                        <div className="bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs flex items-center justify-between">
+                          <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#1E4838]"></span>
+                            Parrilla Sup. Dir. B (Fuera Kern):
+                          </span>
+                          <span className="font-mono font-extrabold text-amber-950 text-xs">
+                            {results.topNBarsB} {results.topSelectedBarB.label} @ {results.topSpacingB} cm
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

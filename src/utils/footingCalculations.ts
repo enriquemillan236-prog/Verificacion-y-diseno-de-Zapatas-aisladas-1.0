@@ -83,6 +83,17 @@ export const DEFAULT_FOOTING_INPUTS: FootingInputs = {
   manualNBarsL: 9,
   manualBarKeyB: '16mm',
   manualNBarsB: 9,
+
+  // Parrilla Superior (Refuerzo Superior condicional por fuera de Kern)
+  hasTopMesh: false,
+  topBarKeyL: '12mm',
+  topDefineByL: 'spacing',
+  topNBarsL: 8,
+  topSpacingL: 20,
+  topBarKeyB: '12mm',
+  topDefineByB: 'spacing',
+  topNBarsB: 8,
+  topSpacingB: 20,
 };
 
 export function calculateFooting(inputs: FootingInputs): FootingResults {
@@ -263,8 +274,60 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
   const flexPressureB = inertiaB > 0 && msB !== 0 ? (msB * (b / 2)) / inertiaB : 0; // Tn/m²
 
   // Comprobación de Kern (Tercio central en ambas direcciones)
-  const eKernL = l / 6;
-  const eKernB = b / 6;
+  const eKernL = Math.round((l / 6) * 1000) / 1000;
+  const eKernB = Math.round((b / 6) * 1000) / 1000;
+  const isOutOfKernL = excentricidadL > eKernL + 0.0001;
+  const isOutOfKernB = excentricidadB > eKernB + 0.0001;
+  const isOutOfKern = isOutOfKernL || isOutOfKernB;
+  const requiresTopMesh = isOutOfKern;
+  // Desactivación estricta cuando la excentricidad regresa al interior del núcleo central (e <= L/6)
+  const topMeshActive = isOutOfKern;
+
+  // Cuantía mínima por retracción y temperatura / tracción en cara superior (ACI 318 / NTE E.060: 0.0018*b*h)
+  const rhoTemp = 0.0018;
+  const topAsMinPerMeter = Math.round(rhoTemp * 100 * h * 100) / 100; // cm²/m
+  const topAsMinL = Math.round(rhoTemp * (b * 100) * h * 100) / 100; // cm² total requerido en Dir. L
+  const topAsMinB = Math.round(rhoTemp * (l * 100) * h * 100) / 100; // cm² total requerido en Dir. B
+  const topAsReqL = topAsMinL;
+  const topAsReqB = topAsMinB;
+
+  // Armadura superior (Parrilla Superior por flexión/despegue)
+  const topBarKeyL = inputs.topBarKeyL || '12mm';
+  const topBarKeyB = inputs.topBarKeyB || '12mm';
+  const topSelectedBarL = REBAR_CATALOG[topBarKeyL] || REBAR_CATALOG['12mm'];
+  const topSelectedBarB = REBAR_CATALOG[topBarKeyB] || REBAR_CATALOG['12mm'];
+
+  let topNBarsL: number;
+  let topSpacingL: number;
+  if (inputs.topDefineByL === 'spacing' && inputs.topSpacingL) {
+    topSpacingL = inputs.topSpacingL;
+    topNBarsL = Math.max(2, Math.floor((b * 100 - 2 * rec) / topSpacingL) + 1);
+  } else if (inputs.topNBarsL) {
+    topNBarsL = inputs.topNBarsL;
+    topSpacingL = Math.round(((b * 100 - 2 * rec) / Math.max(1, topNBarsL - 1)) * 10) / 10;
+  } else {
+    topSpacingL = 20;
+    topNBarsL = Math.max(2, Math.floor((b * 100 - 2 * rec) / topSpacingL) + 1);
+  }
+  const topAsProvidedL = Math.round(topNBarsL * topSelectedBarL.areaCm2 * 100) / 100;
+
+  let topNBarsB: number;
+  let topSpacingB: number;
+  if (inputs.topDefineByB === 'spacing' && inputs.topSpacingB) {
+    topSpacingB = inputs.topSpacingB;
+    topNBarsB = Math.max(2, Math.floor((l * 100 - 2 * rec) / topSpacingB) + 1);
+  } else if (inputs.topNBarsB) {
+    topNBarsB = inputs.topNBarsB;
+    topSpacingB = Math.round(((l * 100 - 2 * rec) / Math.max(1, topNBarsB - 1)) * 10) / 10;
+  } else {
+    topSpacingB = 20;
+    topNBarsB = Math.max(2, Math.floor((l * 100 - 2 * rec) / topSpacingB) + 1);
+  }
+  const topAsProvidedB = Math.round(topNBarsB * topSelectedBarB.areaCm2 * 100) / 100;
+
+  const isTopSteelOkL = topAsProvidedL >= topAsReqL * 0.999;
+  const isTopSteelOkB = topAsProvidedB >= topAsReqB * 0.999;
+
   let qMaxTnM2: number;
   let qMinTnM2: number;
 
@@ -469,6 +532,12 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
     }
   }
 
+  if (isOutOfKern) {
+    recommendations.push(
+      `Excentricidad fuera del Kern (e = ${excentricidadL.toFixed(3)} m > L/6 = ${eKernL.toFixed(3)} m): Se genera despegue en el terreno y tracción superior. Se activa automáticamente la parrilla superior de refuerzo.`
+    );
+  }
+
   const statusText = isAllOk
     ? 'CONFORME / VERIFICADO'
     : 'NO CUMPLE REQUERIMIENTOS';
@@ -486,6 +555,28 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
     excentricidad,
     excentricidadL,
     excentricidadB,
+    eKernL,
+    eKernB,
+    isOutOfKern,
+    isOutOfKernL,
+    isOutOfKernB,
+    requiresTopMesh,
+    topMeshActive,
+    topSelectedBarL,
+    topSelectedBarB,
+    topNBarsL,
+    topSpacingL,
+    topAsProvidedL,
+    topAsMinL,
+    topAsReqL,
+    isTopSteelOkL,
+    topNBarsB,
+    topSpacingB,
+    topAsProvidedB,
+    topAsMinB,
+    topAsReqB,
+    isTopSteelOkB,
+    topAsMinPerMeter,
     b,
     l,
     h,

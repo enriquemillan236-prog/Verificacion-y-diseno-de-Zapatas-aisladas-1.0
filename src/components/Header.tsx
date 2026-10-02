@@ -6,6 +6,7 @@ interface HeaderProps {
   inputs: FootingInputs;
   results: FootingResults;
   onOpenReportModal: () => void;
+  onDownloadPdf: () => Promise<void> | void;
   onExportCsv: () => void;
   onResetDefaults: () => void;
 }
@@ -14,9 +15,24 @@ export const Header: React.FC<HeaderProps> = ({
   inputs,
   results,
   onOpenReportModal,
+  onDownloadPdf,
   onExportCsv,
   onResetDefaults,
 }) => {
+  const [isExportingPdf, setIsExportingPdf] = React.useState(false);
+
+  const handleDownloadClick = async () => {
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
+    try {
+      await onDownloadPdf();
+    } catch (err) {
+      console.error('Error al descargar el PDF en Header:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <header className="bg-[#183B2F] text-white shadow-md border-b border-[#143228]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -43,20 +59,36 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Botones de Acción Superior */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            {/* Ver Memoria */}
-            <button
-              onClick={onOpenReportModal}
-              className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D2E3D8]"
-              title="Abrir memoria de cálculo formal para imprimir o PDF"
-            >
-              <FileText className="w-4 h-4 text-[#183B2F]" />
-              <span>Memoria de Cálculo</span>
-            </button>
+            {/* Columna con botón Memoria de Cálculo y debajo botón Descarga informe PDF */}
+            <div className="flex flex-col gap-1.5">
+              {/* Ver Memoria */}
+              <button
+                type="button"
+                onClick={onOpenReportModal}
+                className="inline-flex items-center justify-center space-x-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors shadow-xs focus:outline-none focus:ring-2 focus:ring-[#D2E3D8] cursor-pointer"
+                title="Abrir memoria de cálculo formal en pantalla"
+              >
+                <FileText className="w-4 h-4 text-[#183B2F]" />
+                <span>Memoria de Cálculo</span>
+              </button>
+
+              {/* Descarga informe PDF (inmediatamente debajo de Memoria de Cálculo) */}
+              <button
+                type="button"
+                onClick={handleDownloadClick}
+                className="inline-flex items-center justify-center space-x-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-[#EEDFA8] text-[#3D3008] hover:bg-[#e6d494] active:scale-98 transition-all shadow-xs border border-[#dfce88] focus:outline-none focus:ring-2 focus:ring-[#EEDFA8] cursor-pointer"
+                title="Descargar directamente el informe formal en PDF (Memoria completa y planos CAD en tamaño carta horizontal)"
+              >
+                <Download className={`w-3.5 h-3.5 text-[#3D3008] ${isExportingPdf ? 'animate-bounce' : ''}`} />
+                <span>{isExportingPdf ? 'Generando PDF...' : 'Descarga informe PDF'}</span>
+              </button>
+            </div>
 
             {/* Exportar CSV */}
             <button
+              type="button"
               onClick={onExportCsv}
-              className="inline-flex items-center space-x-1.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-[#1E4838] text-white border border-[#2e624e] hover:bg-[#255845] transition-colors shadow-sm focus:outline-none"
+              className="inline-flex items-center space-x-1.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-[#1E4838] text-white border border-[#2e624e] hover:bg-[#255845] transition-colors shadow-xs focus:outline-none cursor-pointer self-start"
               title="Exportar datos y resultados en formato CSV / Excel"
             >
               <Download className="w-3.5 h-3.5 text-[#D2E3D8]" />
@@ -65,8 +97,9 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Restablecer */}
             <button
+              type="button"
               onClick={onResetDefaults}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[#1E4838] text-[#D2E3D8] hover:text-white hover:bg-[#255845] transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-[#1E4838] text-[#D2E3D8] hover:text-white hover:bg-[#255845] transition-colors cursor-pointer self-start"
               title="Restablecer valores de plantilla Excel inicial"
             >
               <RotateCcw className="w-4 h-4" />

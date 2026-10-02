@@ -39,6 +39,17 @@ export interface FootingInputs {
   // Refuerzo Zapata (Métrico)
   barKey: string; // '10mm' | '12mm' | '16mm' | '20mm' | '25mm'
 
+  // Parrilla Superior (Refuerzo Superior condicional por fuera de Kern)
+  hasTopMesh?: boolean;
+  topBarKeyL?: string;
+  topDefineByL?: 'count' | 'spacing';
+  topNBarsL?: number;
+  topSpacingL?: number;
+  topBarKeyB?: string;
+  topDefineByB?: 'count' | 'spacing';
+  topNBarsB?: number;
+  topSpacingB?: number;
+
   // Modo de Dimensionamiento
   dimensionMode: 'auto' | 'manual';
   manualB: number; // en m
@@ -78,6 +89,28 @@ export interface FootingResults {
   excentricidad: number; // e en m (dirección crítica L)
   excentricidadL: number; // e_L = |Mxx| / N en m
   excentricidadB: number; // e_B = |Myy| / N en m
+  eKernL: number; // L / 6 en m (límite del tercio central)
+  eKernB: number; // B / 6 en m (límite del tercio central)
+  isOutOfKern: boolean; // excentricidad supera el núcleo central (e > L/6 o e > B/6)
+  isOutOfKernL: boolean; // excentricidad en L fuera del núcleo
+  isOutOfKernB: boolean; // excentricidad en B fuera del núcleo
+  requiresTopMesh: boolean; // true si está fuera del núcleo central (requiere parrilla superior)
+  topMeshActive: boolean; // true si se calcula o habilita parrilla superior
+  topSelectedBarL: RebarData;
+  topSelectedBarB: RebarData;
+  topNBarsL: number;
+  topSpacingL: number;
+  topAsProvidedL: number;
+  topAsMinL: number; // As mín superior por temperatura/tracción en L (0.0018 * B * h) en cm²
+  topAsReqL: number; // As requerido superior en L
+  isTopSteelOkL: boolean;
+  topNBarsB: number;
+  topSpacingB: number;
+  topAsProvidedB: number;
+  topAsMinB: number; // As mín superior por temperatura/tracción en B (0.0018 * L * h) en cm²
+  topAsReqB: number; // As requerido superior en B
+  isTopSteelOkB: boolean;
+  topAsMinPerMeter: number; // cm²/m (0.0018 * 100 * h)
 
   // Dimensiones adoptadas
   b: number; // Ancho B en m
