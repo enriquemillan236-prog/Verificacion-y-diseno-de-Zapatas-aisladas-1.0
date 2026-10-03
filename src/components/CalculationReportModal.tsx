@@ -22,7 +22,7 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
       className={
         isOpen
           ? "fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:m-0 print:bg-white print:static print:overflow-visible"
-          : "fixed -left-[99999px] top-0 w-[1000px] max-w-[1000px] overflow-visible pointer-events-none opacity-100 z-[-9999] bg-white print:static print:left-0 print:w-full print:z-auto"
+          : "fixed left-0 top-0 w-[1050px] max-w-[1050px] overflow-visible pointer-events-none opacity-0 z-[-9999] bg-white print:static print:left-0 print:w-full print:z-auto print:opacity-100"
       }
     >
       {/* Contenedor Modal en Pantalla / Contenedor Completo en Impresión y Exportación */}
@@ -49,6 +49,15 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors cursor-pointer"
+                title="Imprimir o guardar como PDF en Carta Horizontal"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Imprimir / PDF</span>
+              </button>
               <button
                 type="button"
                 onClick={onClose}
@@ -569,7 +578,6 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
                     fillOpacity="0.96"
                     stroke="#C97A3E"
                     strokeWidth="1.1"
-                    filter="drop-shadow(0 1px 3px rgba(0,0,0,0.06))"
                   />
                   <text x="-250" y="102" fill="#C97A3E" fontSize="10" fontWeight="bold" textAnchor="middle">
                     Dir. L: {results.nBarsL} {results.selectedBarL.label} @ {results.spacingL} cm
@@ -589,7 +597,6 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
                     fillOpacity="0.96"
                     stroke="#1E4838"
                     strokeWidth="1.1"
-                    filter="drop-shadow(0 1px 3px rgba(0,0,0,0.06))"
                   />
                   <text x="245" y="-88" fill="#1E4838" fontSize="10" fontWeight="bold" textAnchor="middle">
                     Dir. B: {results.nBarsB} {results.selectedBarB.label} @ {results.spacingB} cm
@@ -778,7 +785,6 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
                           fillOpacity="0.96"
                           stroke="#C97A3E"
                           strokeWidth="1.2"
-                          filter="drop-shadow(0 1px 3px rgba(0,0,0,0.06))"
                         />
                         <text x="-235" y={yRebarLong + 20} fill="#C97A3E" fontSize="9.5" fontWeight="bold" textAnchor="middle">
                           Malla Inf. Dir. L: {results.nBarsL} {results.selectedBarL.label} @ {results.spacingL} cm
@@ -818,7 +824,6 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
                             fillOpacity="0.96"
                             stroke="#C97A3E"
                             strokeWidth="1.1"
-                            filter="drop-shadow(0 1px 3px rgba(0,0,0,0.06))"
                           />
                           <text x="252" y={yFootingTop - 32} fill="#C97A3E" fontSize="9.5" fontWeight="bold" textAnchor="middle">
                             Parrilla Sup. Dir. L: {results.topNBarsL} {results.topSelectedBarL.label} @ {results.topSpacingL} cm

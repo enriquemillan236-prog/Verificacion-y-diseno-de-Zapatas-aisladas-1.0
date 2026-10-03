@@ -56,9 +56,25 @@ export async function downloadReportPdf(
     },
   };
 
-  // 4. Ejecución asíncrona garantizada con promesa y temporizador de seguridad
-  try {
-    const generator = typeof html2pdf === 'function' ? html2pdf() : (html2pdf as any).default();
+    // Asegurar que el contenedor sea visible para html2canvas durante la captura
+    const parentContainer = targetElement.closest('.fixed') as HTMLElement | null;
+    const prevOpacity = parentContainer ? parentContainer.style.opacity : '';
+    const prevPointerEvents = parentContainer ? parentContainer.style.pointerEvents : '';
+    if (parentContainer) {
+      parentContainer.style.opacity = '1';
+    }
+
+    const h2pModule: any = (html2pdf as any)?.default || html2pdf;
+    const generator =
+      typeof h2pModule === 'function'
+        ? h2pModule()
+        : typeof h2pModule?.default === 'function'
+        ? h2pModule.default()
+        : null;
+
+    if (!generator) {
+      throw new Error('No se pudo inicializar el motor de html2pdf.js en el entorno actual.');
+    }
 
     await new Promise<void>((resolve, reject) => {
       // Temporizador de seguridad para evitar que la UI se bloquee indefinidamente
@@ -77,6 +93,12 @@ export async function downloadReportPdf(
         .catch((err: any) => {
           clearTimeout(timeoutId);
           reject(err);
+        })
+        .finally(() => {
+          if (parentContainer) {
+            parentContainer.style.opacity = prevOpacity;
+            parentContainer.style.pointerEvents = prevPointerEvents;
+          }
         });
     });
 

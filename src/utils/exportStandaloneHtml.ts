@@ -39,8 +39,15 @@ export function generateStandaloneHtml(inputs: FootingInputs, results: FootingRe
     body { font-family: 'Inter', sans-serif; background-color: #F7F7F2; }
     h1, h2, h3, .font-heading { font-family: 'Montserrat', sans-serif; }
     @media print {
+      @page {
+        size: letter landscape;
+        margin: 8mm 10mm;
+      }
       .no-print { display: none !important; }
-      body { background: #fff !important; }
+      body { background: #fff !important; width: 100% !important; font-size: 11px; }
+      .page-break-before { break-before: page !important; page-break-before: always !important; }
+      .page-break-after { break-after: page !important; page-break-after: always !important; }
+      .page-break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
     }
   </style>
 </head>
