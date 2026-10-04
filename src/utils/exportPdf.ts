@@ -332,7 +332,7 @@ export function generateFootingPdfReport(
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 6) {
           data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = data.cell.raw.toString().includes('CONFORME')
+          data.cell.styles.textColor = String(data.cell.raw ?? '').includes('CONFORME')
             ? [21, 128, 61]
             : [185, 28, 28];
         }
