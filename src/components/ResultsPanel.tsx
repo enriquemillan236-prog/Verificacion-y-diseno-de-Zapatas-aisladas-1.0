@@ -215,7 +215,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             />
           </div>
           <span className="text-[10px] text-gray-500 mt-1 block">
-            q_med: {results.qMed.toFixed(2)} ≤ {inputs.qa.toFixed(2)} | Utiliz: {(results.qMaxRatio * 100).toFixed(1)}%
+            q_med: {(results.qMed ?? (results.area > 0 ? results.ps / results.area / 10 : 0)).toFixed(2)} ≤ {inputs.qa.toFixed(2)} | Utiliz: {(results.qMaxRatio * 100).toFixed(1)}%
           </span>
         </div>
 
