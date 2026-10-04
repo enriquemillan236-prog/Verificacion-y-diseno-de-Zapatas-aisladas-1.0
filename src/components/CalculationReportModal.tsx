@@ -1,6 +1,7 @@
 import React from 'react';
 import { FootingInputs, FootingResults } from '../types/footing';
 import { X, Printer, Download, CheckCircle2, AlertTriangle, FileText, Check, Layers } from 'lucide-react';
+import { generateFootingPdfReport } from '../utils/exportPdf';
 
 interface CalculationReportModalProps {
   isOpen: boolean;
@@ -51,12 +52,16 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() =>
+                  generateFootingPdfReport(inputs, results, {
+                    filename: `Memoria_${inputs.footingCode}_${inputs.projectName}.pdf`,
+                  })
+                }
                 className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#D2E3D8] text-[#183B2F] hover:bg-[#b9d6c2] transition-colors cursor-pointer"
-                title="Imprimir o guardar como PDF en Carta Horizontal"
+                title="Descargar informe técnico en PDF en Carta Horizontal"
               >
-                <Printer className="w-4 h-4" />
-                <span>Imprimir / PDF</span>
+                <Download className="w-4 h-4" />
+                <span>Descargar PDF</span>
               </button>
               <button
                 type="button"
