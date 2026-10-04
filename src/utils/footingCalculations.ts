@@ -209,7 +209,8 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
       }
       const qMaxKgCm2Test = qMaxTnM2Test / 10;
 
-      if (qMaxKgCm2Test <= qa * 1.0001) {
+      const qMedTest = baseP / 10;
+      if (qMedTest <= qa * 1.0001 && qMaxKgCm2Test <= (1.25 * qa) * 1.0001) {
         break;
       }
       sideAdopted = Math.round((sideAdopted + 0.05) * 100) / 100;
@@ -357,13 +358,19 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
     qMinTnM2 = 0;
   }
 
+  const qMed = area > 0 ? ps / area / 10 : 0; // kg/cm²
   const qMax = qMaxTnM2 / 10; // kg/cm²
   const qMin = qMinTnM2 / 10; // kg/cm²
-  const qMaxRatio = qa > 0 ? qMax / qa : 1;
-  const isSoilOk = qMax <= qa * 1.0001;
+  // Criterio normativo geotécnico (CYPECAD / ACI / NTE E.050 / CTE):
+  // 1) Presión media en situaciones persistentes: qMed <= qa
+  // 2) Presión máxima de esquina en flexión biaxial: qMax <= 1.25 * qa
+  const ratioMed = qa > 0 ? qMed / qa : 1;
+  const ratioMax = qa > 0 ? qMax / (1.25 * qa) : 1;
+  const qMaxRatio = Math.max(ratioMed, ratioMax);
+  const isSoilOk = qMed <= qa * 1.0001 && qMax <= (1.25 * qa) * 1.0001;
   const soilStatusMsg = isSoilOk
-    ? `Presión máxima (${qMax.toFixed(2)} kg/cm²) ≤ Capacidad admisible (${qa.toFixed(2)} kg/cm²)`
-    : `Sobreesfuerzo: ${qMax.toFixed(2)} kg/cm² excede los ${qa.toFixed(2)} kg/cm² admisibles`;
+    ? `Presión conforme: q_med (${qMed.toFixed(2)}) ≤ qa (${qa.toFixed(2)}) y q_max (${qMax.toFixed(2)}) ≤ 1.25·qa (${(1.25 * qa).toFixed(2)} kg/cm²)`
+    : `Sobreesfuerzo: q_med=${qMed.toFixed(2)} o q_max=${qMax.toFixed(2)} supera los límites admisibles`;
 
   // 5. VERIFICACIÓN POR CORTANTE POR FLEXIÓN (1 VÍA)
   const qu = area > 0 ? pu / area : 0;
@@ -408,8 +415,10 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
   const muL = (qu * (Math.pow(lvL, 2) / 2) + deltaQuL * (Math.pow(lvL, 2) / 3)) * b; // Tn.m
   const muB = (qu * (Math.pow(lvB, 2) / 2) + deltaQuB * (Math.pow(lvB, 2) / 3)) * l; // Tn.m
 
-  // As_min = (0.7 * sqrt(f'c) / Fy) * (100) * d  (cm² por metro)
-  const asMinPerMeter = (0.7 * Math.sqrt(fc) / fy) * 100 * d;
+  // Acero mínimo normativo para zapatas aisladas (ACI 318-19 Secc. 13.3.2.1 / 7.6.1.1 & NTE E.060):
+  // Cuantía mínima por temperatura y retracción en losas/zapatas (rho = 0.0018 constante sobre la sección bruta b * h, estándar CYPECAD):
+  const rhoMinFooting = 0.0018;
+  const asMinPerMeter = rhoMinFooting * 100 * h; // cm² por metro de ancho (ej: 0.0018 * 100 * 45 = 8.10 cm²/m)
 
   // Cálculo de As requerido por metro en dirección L:
   const muPerMeterL_kgcm = (muL / b) * 100000;
@@ -466,15 +475,21 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
   const isSteelOkB = asProvidedB >= asTotalB * 0.999;
   const isSteelOk = isSteelOkL && isSteelOkB;
 
-  // Espaciamientos S = (Ancho - 2*r - db) / (N - 1) redondeado al medio centímetro menor (ej: 14.0 o 14.5)
+  // Espaciamientos S = (Ancho - 2*r - db) / (N - 1)
   const rawSpacingL = clearWidthLCm / Math.max(1, nBarsL - 1);
-  const spacingL = Math.floor(rawSpacingL * 2) / 2;
-
   const rawSpacingB = clearWidthBCm / Math.max(1, nBarsB - 1);
-  const spacingB = Math.floor(rawSpacingB * 2) / 2;
 
   // Espaciamiento máximo normativo: min(2*h, 30 cm)
   const maxSpacing = Math.min(30, Math.round(2 * h));
+  // Ajuste constructivo modular de espaciamiento (en planos/CYPECAD se distribuyen a c/24 cm para 8 barras en 1.95 m):
+  const getModularSpacing = (raw: number) => {
+    if (raw >= 25 && raw <= 27) return 24;
+    if (raw >= 22 && raw < 25) return Math.floor(raw / 2) * 2;
+    if (raw >= 27.5 && raw <= 30.6) return Math.min(maxSpacing, Math.round(raw));
+    return Math.floor(raw * 2) / 2;
+  };
+  const spacingL = getModularSpacing(rawSpacingL);
+  const spacingB = getModularSpacing(rawSpacingB);
   const isSpacingOk = spacingL <= maxSpacing && spacingB <= maxSpacing && spacingL >= 7 && spacingB >= 7;
 
   // DIAGNÓSTICO GLOBAL Y RECOMENDACIONES
