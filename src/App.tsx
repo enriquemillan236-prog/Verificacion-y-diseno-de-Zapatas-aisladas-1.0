@@ -16,7 +16,7 @@ import { TechnicalFootingSVG } from './components/TechnicalFootingSVG';
 import { ResultsPanel } from './components/ResultsPanel';
 import { CalculationReportModal } from './components/CalculationReportModal';
 import { exportFootingCsv } from './utils/exportCsv';
-import { downloadReportPdf } from './utils/exportPdf';
+import { generateFootingPdfReport } from './utils/exportPdf';
 import heroImage1 from './assets/images/zapata_concreto_portada_limpia_1790797895690.jpg';
 import heroImage2 from './assets/images/zapata_armado_obra_1790805955879.jpg';
 import heroImage3 from './assets/images/zapata_vaciado_concreto_1790805966764.jpg';
@@ -94,7 +94,7 @@ export default function App() {
   };
 
   // Descarga directa y automática del archivo PDF completo (diseño, verificaciones y planos) en el cliente
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = () => {
     const cleanProject = (inputs.projectName || 'Proyecto').trim().replace(/\s+/g, '_');
     const cleanCode = (inputs.footingCode || 'Z1').trim().replace(/\s+/g, '_');
     const filename = `Memoria_Calculo_${cleanCode}_${cleanProject}_Horizontal.pdf`;
@@ -102,14 +102,14 @@ export default function App() {
     showToast('Generando y descargando archivo PDF...');
 
     try {
-      const success = await downloadReportPdf('printable-calculation-report', {
+      const success = generateFootingPdfReport(inputs, results, {
         filename,
       });
 
       if (success) {
         showToast('Archivo PDF descargado con éxito');
       } else {
-        showToast('No se pudo generar la descarga directa del PDF');
+        showToast('Error al generar la descarga del PDF');
       }
     } catch (err) {
       console.error('Error al procesar descarga de PDF:', err);
