@@ -204,7 +204,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             <span className="text-xl font-extrabold text-[#183B2F]">
               {results.qMax.toFixed(2)}
             </span>
-            <span className="text-xs text-gray-500">/ {inputs.qa.toFixed(2)} kg/cm²</span>
+            <span className="text-xs text-gray-500">/ {(inputs.qa * 1.25).toFixed(2)} kg/cm² (1.25·qa)</span>
           </div>
           <div className="w-full bg-gray-200 h-1.5 rounded-full mt-2 overflow-hidden">
             <div
@@ -215,7 +215,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             />
           </div>
           <span className="text-[10px] text-gray-500 mt-1 block">
-            Utilización: {(results.qMaxRatio * 100).toFixed(1)}%
+            q_med: {results.qMed.toFixed(2)} ≤ {inputs.qa.toFixed(2)} | Utiliz: {(results.qMaxRatio * 100).toFixed(1)}%
           </span>
         </div>
 
