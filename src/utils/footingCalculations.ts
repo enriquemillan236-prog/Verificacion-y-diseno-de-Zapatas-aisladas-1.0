@@ -602,6 +602,7 @@ export function calculateFooting(inputs: FootingInputs): FootingResults {
     qn,
     aReq,
     qMax,
+    qMed,
     qMin,
     qMaxRatio,
     isSoilOk,
